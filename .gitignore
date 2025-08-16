@@ -1,0 +1,11 @@
+# Archivos del sistema macOS
+**/.DS_Store
+
+# Dependencias
+node_modules/
+
+# Archivos de compilación
+dist/
+
+# Documentación que no debe publicarse
+PUBLISH.md

@@ -1,0 +1,40 @@
+# Source files
+**/*.ts
+!dist/**/*.d.ts
+tsconfig.json
+.eslintrc.js
+
+# Development files
+node_modules/
+.DS_Store
+*.log
+npm-debug.log*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+test/
+tests/
+*.test.*
+*.spec.*
+
+# Git
+.git/
+.gitignore
+
+# Documentation (dev only)
+dev-setup.md
+LATE_NODE_USAGE.md
+
+# Docker files
+docker-compose.yml
+Dockerfile
+entrypoint.sh
+*.sh
+
+# Build artifacts
+*.tsbuildinfo

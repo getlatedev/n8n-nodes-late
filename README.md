@@ -1,6 +1,6 @@
 # n8n-nodes-late
 
-<img src="https://raw.githubusercontent.com/getlatedev/n8n-nodes-late/main/late/late-logo.png" alt="LATE Logo" width="200"/>
+<img src="https://raw.githubusercontent.com/getlatedev/n8n-nodes-late/master/late/late-logo.png" alt="LATE Logo" width="200"/>
 
 An n8n community node for the [LATE API](https://getlate.dev) - the professional social media management platform.
 

@@ -1,0 +1,70 @@
+{
+  "name": "n8n-nodes-late",
+  "version": "1.0.0",
+  "description": "n8n community node for LATE API - Schedule and manage social media posts across Twitter/X, Instagram, Facebook, LinkedIn, TikTok, YouTube, and Threads",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc && npm run copy-assets",
+    "copy-assets": "cp late/late-logo.svg dist/late/",
+    "dev": "tsc --watch",
+    "lint": "eslint --ext .ts .",
+    "lintfix": "eslint --ext .ts . --fix",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepack": "npm run build && npm run lint",
+    "prepublishOnly": "npm run build && npm run lint"
+  },
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "late",
+    "social-media",
+    "api",
+    "twitter",
+    "instagram",
+    "facebook",
+    "linkedin",
+    "tiktok",
+    "youtube",
+    "threads",
+    "scheduling",
+    "automation"
+  ],
+  "author": {
+    "name": "LATE",
+    "email": "miki@getlate.dev",
+    "url": "https://getlate.dev"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/getlatedev/n8n-nodes-late#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/getlatedev/n8n-nodes-late.git"
+  },
+  "bugs": {
+    "url": "https://github.com/getlatedev/n8n-nodes-late/issues"
+  },
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/LateNode.credentials.js"
+    ],
+    "nodes": [
+      "dist/late/Late.node.js"
+    ]
+  },
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^18.0.0",
+    "eslint": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint-plugin-n8n-nodes-base": "^1.0.0"
+  },
+  "dependencies": {
+    "n8n-core": "^1.14.1",
+    "n8n-workflow": "^1.82.0"
+  }
+}

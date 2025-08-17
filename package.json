@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-late",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "n8n community node for LATE API - Schedule and manage social media posts across Twitter/X, Instagram, Facebook, LinkedIn, TikTok, YouTube, and Threads",
   "main": "dist/index.js",
   "scripts": {
@@ -61,9 +61,7 @@
     "eslint": "^8.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
-    "eslint-plugin-n8n-nodes-base": "^1.0.0"
-  },
-  "dependencies": {
+    "eslint-plugin-n8n-nodes-base": "^1.0.0",
     "n8n-core": "^1.14.1",
     "n8n-workflow": "^1.82.0"
   }

@@ -1,7 +1,9 @@
 import {
   IAuthenticateGeneric,
   ICredentialDataDecryptedObject,
+  ICredentialTestRequest,
   ICredentialType,
+  INodeCredentialTestResult,
 } from "n8n-workflow";
 
 export class LateNode implements ICredentialType {
@@ -21,13 +23,22 @@ export class LateNode implements ICredentialType {
     },
   ];
 
-  // Add Authorization: Bearer <token> to every request
+  // Añadir Authorization: Bearer <token> a cada request
   authenticate: IAuthenticateGeneric = {
     type: "generic",
     properties: {
       headers: {
         Authorization: '={{ "Bearer " + $credentials.apiKey }}',
       },
+    },
+  };
+
+  // Test de credenciales obligatorio
+  test: ICredentialTestRequest = {
+    request: {
+      baseURL: "https://getlate.dev/",
+      url: "/api/v1/usage-stats",
+      method: "GET",
     },
   };
 }

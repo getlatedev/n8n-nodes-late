@@ -1,0 +1,262 @@
+name: Auto Release
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version increment type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  auto-release:
+    runs-on: ubuntu-latest
+    
+    # Solo ejecutar si hay commits que no sean merges automáticos
+    if: "!contains(github.event.head_commit.message, 'chore: bump version')"
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Get current version
+        id: current_version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT_VERSION"
+
+      - name: Determine version increment type
+        id: version_type
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION_TYPE="${{ github.event.inputs.version_type }}"
+            echo "Manual trigger: Using $VERSION_TYPE"
+          else
+            # Analizar commits desde el último tag para determinar el tipo de versión
+            LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+            
+            if [ -z "$LAST_TAG" ]; then
+              echo "No previous tag found, using patch"
+              VERSION_TYPE="patch"
+            else
+              echo "Last tag: $LAST_TAG"
+              
+              # Obtener commits desde el último tag
+              COMMITS=$(git log $LAST_TAG..HEAD --oneline)
+              echo "Commits since last tag:"
+              echo "$COMMITS"
+              
+              # Determinar tipo de versión basado en conventional commits
+              if echo "$COMMITS" | grep -qE "^[a-f0-9]+ (feat|feature)(\(.+\))?!:"; then
+                VERSION_TYPE="major"
+                echo "Found breaking feature, using major"
+              elif echo "$COMMITS" | grep -qE "^[a-f0-9]+ .+!:"; then
+                VERSION_TYPE="major" 
+                echo "Found breaking change, using major"
+              elif echo "$COMMITS" | grep -qE "^[a-f0-9]+ (feat|feature)(\(.+\))?:"; then
+                VERSION_TYPE="minor"
+                echo "Found feature, using minor"
+              else
+                VERSION_TYPE="patch"
+                echo "No major/minor changes found, using patch"
+              fi
+            fi
+          fi
+          
+          echo "increment_type=$VERSION_TYPE" >> $GITHUB_OUTPUT
+          echo "Version increment type: $VERSION_TYPE"
+
+      - name: Run tests and linting
+        run: |
+          echo "Running linting..."
+          npm run lint
+          echo "Building project..."
+          npm run build
+
+      - name: Increment version
+        id: new_version
+        run: |
+          VERSION_TYPE="${{ steps.version_type.outputs.increment_type }}"
+          echo "Incrementing version by: $VERSION_TYPE"
+          
+          NEW_VERSION=$(npm version $VERSION_TYPE --no-git-tag-version)
+          NEW_VERSION=${NEW_VERSION#v} # Remove 'v' prefix
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Update changelog
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          TODAY=$(date +"%Y-%m-%d")
+          
+          # Crear o actualizar CHANGELOG.md
+          if [ ! -f CHANGELOG.md ]; then
+            echo "# Changelog" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          fi
+          
+          # Preparar entrada del changelog
+          TEMP_CHANGELOG=$(mktemp)
+          echo "# Changelog" > $TEMP_CHANGELOG
+          echo "" >> $TEMP_CHANGELOG
+          echo "## [${NEW_VERSION}] - ${TODAY}" >> $TEMP_CHANGELOG
+          echo "" >> $TEMP_CHANGELOG
+          
+          # Obtener commits desde el último tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            echo "### Changes" >> $TEMP_CHANGELOG
+            git log $LAST_TAG..HEAD --oneline --pretty=format:"- %s" >> $TEMP_CHANGELOG
+          else
+            echo "### Changes" >> $TEMP_CHANGELOG
+            echo "- Initial release" >> $TEMP_CHANGELOG
+          fi
+          
+          echo "" >> $TEMP_CHANGELOG
+          echo "" >> $TEMP_CHANGELOG
+          
+          # Agregar changelog existente (saltando la primera línea)
+          if [ -f CHANGELOG.md ]; then
+            tail -n +2 CHANGELOG.md >> $TEMP_CHANGELOG
+          fi
+          
+          mv $TEMP_CHANGELOG CHANGELOG.md
+
+      - name: Commit version bump
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          
+          git add package.json package-lock.json CHANGELOG.md
+          git commit -m "chore: bump version to ${NEW_VERSION}
+          
+          Auto-generated version bump:
+          - Version: ${NEW_VERSION}
+          - Type: ${{ steps.version_type.outputs.increment_type }}
+          - Triggered by: ${{ github.event_name }}"
+
+      - name: Create and push tag
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          TAG_NAME="v${NEW_VERSION}"
+          
+          echo "Creating tag: $TAG_NAME"
+          git tag -a $TAG_NAME -m "Release ${NEW_VERSION}
+          
+          Auto-generated release:
+          - Version: ${NEW_VERSION}
+          - Type: ${{ steps.version_type.outputs.increment_type }}
+          - Commit: ${{ github.sha }}"
+          
+          echo "Pushing changes and tag..."
+          git push origin master
+          git push origin $TAG_NAME
+
+      - name: Create GitHub Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const newVersion = '${{ steps.new_version.outputs.new_version }}';
+            const tagName = `v${newVersion}`;
+            const versionType = '${{ steps.version_type.outputs.increment_type }}';
+            
+            // Leer changelog para esta versión
+            let changelogContent = '';
+            try {
+              const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+              const lines = changelog.split('\n');
+              let capturing = false;
+              let capturedLines = [];
+              
+              for (const line of lines) {
+                if (line.startsWith(`## [${newVersion}]`)) {
+                  capturing = true;
+                  continue;
+                }
+                if (capturing && line.startsWith('## [')) {
+                  break;
+                }
+                if (capturing && line.trim()) {
+                  capturedLines.push(line);
+                }
+              }
+              
+              changelogContent = capturedLines.join('\n').trim();
+            } catch (error) {
+              console.log('Could not read changelog:', error.message);
+            }
+            
+            const releaseNotes = `## 🚀 Release ${newVersion}
+
+            ${changelogContent || 'Auto-generated release'}
+
+            ### Installation
+            \`\`\`bash
+            npm install n8n-nodes-late@${newVersion}
+            \`\`\`
+
+            Or install via n8n Community Nodes panel.
+
+            ---
+
+            **Release Type:** ${versionType}
+            **Auto-generated:** This release was automatically created from commits to master branch.
+
+            This release will be automatically published to NPM via GitHub Actions.`;
+
+            const { data: release } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tagName,
+              name: `Release ${newVersion}`,
+              body: releaseNotes,
+              draft: false,
+              prerelease: false,
+              make_latest: true
+            });
+            
+            console.log(`Created release: ${release.html_url}`);
+
+      - name: Summary
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          VERSION_TYPE="${{ steps.version_type.outputs.increment_type }}"
+          
+          echo "## 🎉 Auto-Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **New Version:** ${NEW_VERSION}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version Type:** ${VERSION_TYPE}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag Created:** v${NEW_VERSION}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release:** [View Release](https://github.com/${{ github.repository }}/releases/tag/v${NEW_VERSION})" >> $GITHUB_STEP_SUMMARY
+          echo "- **NPM Publication:** Will be triggered automatically" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Version bumped and committed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Tag created and pushed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ GitHub release created" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔄 NPM publication workflow will start automatically" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,123 @@
+name: Publish to NPM
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish'
+        required: false
+        default: 'current'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Build project
+        run: npm run build
+
+      - name: Verify build output
+        run: |
+          echo "Checking dist directory..."
+          ls -la dist/
+          echo "Checking late node files..."
+          ls -la dist/late/
+          echo "Checking credentials files..."
+          ls -la dist/credentials/
+
+      - name: Update version from release tag (if release)
+        if: github.event_name == 'release'
+        run: |
+          RELEASE_TAG=${GITHUB_REF#refs/tags/}
+          echo "Release tag: $RELEASE_TAG"
+          # Remove 'v' prefix if present
+          VERSION=${RELEASE_TAG#v}
+          echo "Setting version to: $VERSION"
+          npm version $VERSION --no-git-tag-version
+
+      - name: Verify package.json
+        run: |
+          echo "Current package.json version:"
+          node -p "require('./package.json').version"
+          echo "Package.json contents:"
+          cat package.json
+
+      - name: Run pre-publish checks
+        run: |
+          echo "Running prepack script..."
+          npm run prepack
+          echo "Checking final dist structure..."
+          find dist -type f -name "*.js" | head -10
+
+      - name: Publish to NPM
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub release comment
+        if: github.event_name == 'release'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const release_id = context.payload.release.id;
+            const version = process.env.GITHUB_REF.replace('refs/tags/', '');
+            
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: context.payload.release.number || release_id,
+              body: `🚀 Successfully published version \`${version}\` to NPM!\n\n📦 Install with: \`npm install n8n-nodes-late@${version}\``
+            });
+
+  notify-success:
+    runs-on: ubuntu-latest
+    needs: publish
+    if: success()
+    
+    steps:
+      - name: Success notification
+        run: |
+          echo "✅ Package successfully published to NPM!"
+          echo "📦 Package: n8n-nodes-late"
+          echo "🏷️  Version: ${GITHUB_REF#refs/tags/}"
+          echo "🔗 NPM: https://www.npmjs.com/package/n8n-nodes-late"
+
+  notify-failure:
+    runs-on: ubuntu-latest
+    needs: publish
+    if: failure()
+    
+    steps:
+      - name: Failure notification
+        run: |
+          echo "❌ Failed to publish package to NPM"
+          echo "Please check the logs above for details"
+          exit 1

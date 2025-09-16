@@ -9,3 +9,5 @@ dist/
 
 # Documentación que no debe publicarse
 PUBLISH.md
+
+*.tgz

@@ -12,7 +12,8 @@ export const linkedinResource: LateResourceModule = {
           url: "=/accounts/{{ $parameter.accountId }}/linkedin-organization",
           body: {
             accountType: "={{ $parameter.accountType }}",
-            selectedOrganization: "={{ JSON.parse($parameter.selectedOrganization || '{}') }}",
+            selectedOrganization:
+              "={{ { id: $parameter.organizationId || '', urn: $parameter.organizationUrn || '', name: $parameter.organizationName || '', logoUrl: $parameter.organizationLogoUrl || '', description: $parameter.organizationDescription || '' } }}",
           },
         },
       },
@@ -51,18 +52,79 @@ export const linkedinResource: LateResourceModule = {
       description: "Type of LinkedIn account",
     },
     {
-      displayName: "Selected Organization",
-      name: "selectedOrganization",
-      type: "json",
-      default: "{}",
+      displayName: "Organization ID",
+      name: "organizationId",
+      type: "string",
+      default: "",
       displayOptions: {
         show: {
           resource: ["linkedin"],
           operation: ["updateOrganization"],
+          accountType: ["organization"],
         },
       },
-      description: "Organization details",
-      placeholder: '{"id": "123456", "urn": "urn:li:organization:123456", "name": "Company Name"}',
+      description: "LinkedIn organization ID",
+      placeholder: "123456",
+    },
+    {
+      displayName: "Organization URN",
+      name: "organizationUrn",
+      type: "string",
+      default: "",
+      displayOptions: {
+        show: {
+          resource: ["linkedin"],
+          operation: ["updateOrganization"],
+          accountType: ["organization"],
+        },
+      },
+      description: "LinkedIn organization URN",
+      placeholder: "urn:li:organization:123456",
+    },
+    {
+      displayName: "Organization Name",
+      name: "organizationName",
+      type: "string",
+      default: "",
+      displayOptions: {
+        show: {
+          resource: ["linkedin"],
+          operation: ["updateOrganization"],
+          accountType: ["organization"],
+        },
+      },
+      description: "Organization display name",
+      placeholder: "Company Name",
+    },
+    {
+      displayName: "Organization Logo URL",
+      name: "organizationLogoUrl",
+      type: "string",
+      default: "",
+      displayOptions: {
+        show: {
+          resource: ["linkedin"],
+          operation: ["updateOrganization"],
+          accountType: ["organization"],
+        },
+      },
+      description: "URL to the organization's logo",
+      placeholder: "https://media.licdn.com/dms/image/...",
+    },
+    {
+      displayName: "Organization Description",
+      name: "organizationDescription",
+      type: "string",
+      default: "",
+      displayOptions: {
+        show: {
+          resource: ["linkedin"],
+          operation: ["updateOrganization"],
+          accountType: ["organization"],
+        },
+      },
+      description: "Organization description",
+      placeholder: "Company description...",
     },
   ],
 };

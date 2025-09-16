@@ -29,7 +29,8 @@ export const facebookResource: LateResourceModule = {
             profileId: "={{ $parameter.profileId }}",
             pageId: "={{ $parameter.pageId }}",
             tempToken: "={{ $parameter.tempToken }}",
-            userProfile: "={{ JSON.parse($parameter.userProfile || '{}') }}",
+            userProfile:
+              "={{ { id: $parameter.userProfileId || '', name: $parameter.userProfileName || '', email: $parameter.userProfileEmail || '', picture: $parameter.userProfilePicture || '', accessToken: $parameter.userProfileAccessToken || '' } }}",
           },
         },
       },
@@ -91,17 +92,74 @@ export const facebookResource: LateResourceModule = {
       description: "Facebook page ID to select",
     },
     {
-      displayName: "User Profile",
-      name: "userProfile",
-      type: "json",
-      default: "{}",
+      displayName: "User Profile ID",
+      name: "userProfileId",
+      type: "string",
+      default: "",
       displayOptions: {
         show: {
           resource: ["facebook"],
           operation: ["selectPage"],
         },
       },
-      description: "User profile data",
+      description: "Facebook user ID",
+      placeholder: "123456789",
+    },
+    {
+      displayName: "User Profile Name",
+      name: "userProfileName",
+      type: "string",
+      default: "",
+      displayOptions: {
+        show: {
+          resource: ["facebook"],
+          operation: ["selectPage"],
+        },
+      },
+      description: "Facebook user display name",
+      placeholder: "John Doe",
+    },
+    {
+      displayName: "User Profile Email",
+      name: "userProfileEmail",
+      type: "string",
+      default: "",
+      displayOptions: {
+        show: {
+          resource: ["facebook"],
+          operation: ["selectPage"],
+        },
+      },
+      description: "Facebook user email address",
+      placeholder: "john@example.com",
+    },
+    {
+      displayName: "User Profile Picture",
+      name: "userProfilePicture",
+      type: "string",
+      default: "",
+      displayOptions: {
+        show: {
+          resource: ["facebook"],
+          operation: ["selectPage"],
+        },
+      },
+      description: "URL to the user's profile picture",
+      placeholder: "https://graph.facebook.com/123456789/picture",
+    },
+    {
+      displayName: "User Profile Access Token",
+      name: "userProfileAccessToken",
+      type: "string",
+      default: "",
+      displayOptions: {
+        show: {
+          resource: ["facebook"],
+          operation: ["selectPage"],
+        },
+      },
+      description: "Facebook user access token",
+      placeholder: "EAABwzLix...",
     },
     {
       displayName: "Account ID",

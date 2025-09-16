@@ -60,7 +60,18 @@ jobs:
           # Remove 'v' prefix if present
           VERSION=${RELEASE_TAG#v}
           echo "Setting version to: $VERSION"
-          npm version $VERSION --no-git-tag-version
+          
+          # Get current version from package.json
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Only update version if it's different
+          if [ "$VERSION" != "$CURRENT_VERSION" ]; then
+            echo "Updating version from $CURRENT_VERSION to $VERSION"
+            npm version $VERSION --no-git-tag-version
+          else
+            echo "Version is already $VERSION, skipping version update"
+          fi
 
       - name: Verify package.json
         run: |

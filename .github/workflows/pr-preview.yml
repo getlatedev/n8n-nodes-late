@@ -36,11 +36,13 @@ jobs:
           head-ref: 'HEAD'
 
       - name: Install dependencies
+        if: steps.release_relevance.outputs.should-release == 'true'
         run: |
           echo "📦 Installing dependencies..."
           npm ci
 
       - name: Run build and tests
+        if: steps.release_relevance.outputs.should-release == 'true'
         id: build_test
         run: |
           echo "BUILD_SUCCESS=false" >> $GITHUB_OUTPUT
@@ -65,6 +67,7 @@ jobs:
           fi
 
       - name: Analyze release impact
+        if: steps.release_relevance.outputs.should-release == 'true'
         id: release_analysis
         run: |
           echo "🔍 Analyzing changes for release preview..."
@@ -137,6 +140,7 @@ jobs:
           echo "📈 Predicted new version: $NEW_VERSION ($VERSION_TYPE increment)"
 
       - name: Check for potential issues
+        if: steps.release_relevance.outputs.should-release == 'true'
         id: issue_check
         run: |
           echo "🔍 Checking for potential issues..."
@@ -180,6 +184,7 @@ jobs:
           fi
 
       - name: Generate changelog preview
+        if: steps.release_relevance.outputs.should-release == 'true'
         id: changelog_preview
         run: |
           echo "📝 Generating changelog preview..."
@@ -211,6 +216,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Check NPM package status
+        if: steps.release_relevance.outputs.should-release == 'true'
         id: npm_check
         run: |
           echo "📦 Checking NPM package status..."
@@ -285,50 +291,59 @@ jobs:
             const issuesSection = hasIssues ? `### ⚠️ Potential Issues Detected
             ${issues}` : '### ✅ No Issues Detected';
             
-            const comment = `## ${status} Release Preview for PR #${context.issue.number}
+            let comment = '';
             
-            ### 📊 Build & Test Status
-            - **Linting:** ${lintSuccess ? '✅ Passed' : '❌ Failed'}
-            - **Build:** ${buildSuccess ? '✅ Successful' : '❌ Failed'}
+            if (shouldRelease) {
+              comment = `## ${status} Release Preview for PR #${context.issue.number}
             
-            ### 📈 Version Analysis
-            - **Current Version:** \`${currentVersion}\`
-            - **Predicted New Version:** \`${newVersion}\` (${versionType.toUpperCase()} increment)
-            - **Last Tag on Master:** ${lastTag || 'None (initial release)'}
-            - **Latest NPM Version:** \`${latestNpm}\`
+              ### 📊 Build & Test Status
+              - **Linting:** ${lintSuccess ? '✅ Passed' : '❌ Failed'}
+              - **Build:** ${buildSuccess ? '✅ Successful' : '❌ Failed'}
+              
+              ### 📈 Version Analysis
+              - **Current Version:** \`${currentVersion}\`
+              - **Predicted New Version:** \`${newVersion}\` (${versionType.toUpperCase()} increment)
+              - **Last Tag on Master:** ${lastTag || 'None (initial release)'}
+              - **Latest NPM Version:** \`${latestNpm}\`
+              
+              ### 🚀 What Will Happen When Merged
+              1. **Auto-release workflow** will trigger (path filters matched)
+              2. Version will be bumped to \`${newVersion}\`
+              3. Git tag \`v${newVersion}\` will be created
+              4. GitHub release will be published
+              5. Package will be published to NPM
+              
+              **Files triggering release:**
+              ${relevantFiles.split(',').filter(f => f.trim()).map(f => `- \`${f.trim()}\``).join('\n')}
+              
+              ${warningSection}
+              
+              ${issuesSection}
+              
+              ### 📝 Changelog Preview
+              \`\`\`markdown
+              ${changelogContent}
+              \`\`\`
+              
+              ### 🎯 Recommendation
+              ${recommendation}`;
+            } else {
+              comment = `## ${status} Release Preview for PR #${context.issue.number}
+              
+              ### 📂 Release Relevance Analysis
+              **${changeSummary}**
+              
+              ### ⏭️ No Release Will Be Triggered
+              Only documentation/configuration files were changed, so no release will be created when merged.
+              
+              **Changed files (ignored):**
+              ${ignoredFiles.split(',').filter(f => f.trim()).map(f => `- \`${f.trim()}\``).join('\n')}
+              
+              ### 🎯 Recommendation
+              ${recommendation}`;
+            }
             
-            ### 📂 Release Relevance Analysis
-            **${changeSummary}**
-            
-            ${shouldRelease ? `
-            ### 🚀 What Will Happen When Merged
-            1. **Auto-release workflow** will trigger (path filters matched)
-            2. Version will be bumped to \`${newVersion}\`
-            3. Git tag \`v${newVersion}\` will be created
-            4. GitHub release will be published
-            5. Package will be published to NPM
-            
-            **Files triggering release:**
-            ${relevantFiles.split(',').filter(f => f.trim()).map(f => `- \`${f.trim()}\``).join('\n')}
-            ` : `
-            ### ⏭️ No Release Will Be Triggered
-            Only documentation/configuration files were changed, so no release will be created when merged.
-            
-            **Changed files (ignored):**
-            ${ignoredFiles.split(',').filter(f => f.trim()).map(f => `- \`${f.trim()}\``).join('\n')}
-            `}
-            
-            ${warningSection}
-            
-            ${issuesSection}
-            
-            ### 📝 Changelog Preview
-            \`\`\`markdown
-            ${changelogContent}
-            \`\`\`
-            
-            ### 🎯 Recommendation
-            ${recommendation}
+            comment += `
             
             ---
             

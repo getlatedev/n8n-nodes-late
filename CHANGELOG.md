@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.8] - 2025-09-18
+
+### Changes
+- Develop (#8)
+- Update workflow triggers (#7)
+
+
 ## [0.0.7] - 2025-09-18
 
 ### Changes

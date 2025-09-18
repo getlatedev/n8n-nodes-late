@@ -28,6 +28,13 @@ jobs:
         with:
           node-version: '20'  # ← Cambiado de 18 a 20
 
+      - name: Check release relevance
+        id: release_relevance
+        uses: ./.github/actions/check-release-relevance
+        with:
+          base-ref: 'origin/master'
+          head-ref: 'HEAD'
+
       - name: Install dependencies
         run: |
           echo "📦 Installing dependencies..."
@@ -244,9 +251,17 @@ jobs:
             const changelogContent = `${{ steps.changelog_preview.outputs.changelog_content }}`;
             const issues = `${{ steps.issue_check.outputs.issues }}`;
             
+            // Release relevance info
+            const shouldRelease = '${{ steps.release_relevance.outputs.should-release }}' === 'true';
+            const changeSummary = '${{ steps.release_relevance.outputs.change-summary }}';
+            const relevantFiles = '${{ steps.release_relevance.outputs.relevant-files }}';
+            const ignoredFiles = '${{ steps.release_relevance.outputs.ignored-files }}';
+            
             let status = '✅';
             if (!buildSuccess || !lintSuccess || hasIssues || versionExists) {
               status = '❌';
+            } else if (!shouldRelease) {
+              status = '⏭️';
             }
             
             let recommendation = '';
@@ -256,8 +271,10 @@ jobs:
               recommendation = '⚠️ **INVESTIGATE FIRST** - Version conflict needs to be resolved.';
             } else if (hasIssues) {
               recommendation = '⚠️ **REVIEW REQUIRED** - Please address the issues above.';
+            } else if (!shouldRelease) {
+              recommendation = '⏭️ **SAFE TO MERGE** - Only documentation/config changes, no release will be triggered.';
             } else {
-              recommendation = '✅ **READY TO MERGE** - All checks passed successfully!';
+              recommendation = '✅ **READY TO MERGE** - All checks passed, release will be created!';
             }
             
             const warningSection = versionExists ? `### ⚠️ **WARNING**
@@ -280,12 +297,26 @@ jobs:
             - **Last Tag on Master:** ${lastTag || 'None (initial release)'}
             - **Latest NPM Version:** \`${latestNpm}\`
             
+            ### 📂 Release Relevance Analysis
+            **${changeSummary}**
+            
+            ${shouldRelease ? `
             ### 🚀 What Will Happen When Merged
-            1. **Auto-release workflow** will trigger
+            1. **Auto-release workflow** will trigger (path filters matched)
             2. Version will be bumped to \`${newVersion}\`
             3. Git tag \`v${newVersion}\` will be created
             4. GitHub release will be published
             5. Package will be published to NPM
+            
+            **Files triggering release:**
+            ${relevantFiles.split(',').filter(f => f.trim()).map(f => `- \`${f.trim()}\``).join('\n')}
+            ` : `
+            ### ⏭️ No Release Will Be Triggered
+            Only documentation/configuration files were changed, so no release will be created when merged.
+            
+            **Changed files (ignored):**
+            ${ignoredFiles.split(',').filter(f => f.trim()).map(f => `- \`${f.trim()}\``).join('\n')}
+            `}
             
             ${warningSection}
             

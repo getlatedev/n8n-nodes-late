@@ -1,0 +1,175 @@
+name: 'Check Release Relevance'
+description: 'Checks if the changes in a PR or commit are relevant for creating a release'
+inputs:
+  base-ref:
+    description: 'Base reference to compare against (e.g., origin/master)'
+    required: false
+    default: 'origin/master'
+  head-ref:
+    description: 'Head reference to compare (e.g., HEAD)'
+    required: false
+    default: 'HEAD'
+outputs:
+  should-release:
+    description: 'Whether changes are relevant for release (true/false)'
+    value: ${{ steps.check.outputs.should-release }}
+  relevant-files:
+    description: 'List of relevant files that were changed'
+    value: ${{ steps.check.outputs.relevant-files }}
+  ignored-files:
+    description: 'List of ignored files that were changed'
+    value: ${{ steps.check.outputs.ignored-files }}
+  change-summary:
+    description: 'Human readable summary of changes'
+    value: ${{ steps.check.outputs.change-summary }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Check release relevance
+      id: check
+      shell: bash
+      run: |
+        echo "🔍 Checking if changes are relevant for release..."
+        
+        # Define patterns that should trigger releases
+        RELEVANT_PATTERNS=(
+          "late/"
+          "credentials/"
+          "package.json"
+          "package-lock.json"
+          "tsconfig.json"
+          "*.ts"
+          "*.js"
+          "*.json"
+        )
+        
+        # Define patterns that should NOT trigger releases
+        IGNORE_PATTERNS=(
+          ".github/"
+          "*.md"
+          ".gitignore"
+          ".eslintrc.js"
+          ".eslintignore"
+          "README*"
+          "CHANGELOG*"
+          "LICENSE*"
+          "*.txt"
+          ".vscode/"
+          ".idea/"
+          "docs/"
+        )
+        
+        # Get list of changed files
+        if git rev-parse --verify ${{ inputs.base-ref }} >/dev/null 2>&1; then
+          BASE_REF="${{ inputs.base-ref }}"
+        else
+          echo "⚠️  Base ref ${{ inputs.base-ref }} not found, using master"
+          git fetch origin master
+          BASE_REF="origin/master"
+        fi
+        
+        CHANGED_FILES=$(git diff --name-only $BASE_REF...${{ inputs.head-ref }} 2>/dev/null || echo "")
+        
+        if [ -z "$CHANGED_FILES" ]; then
+          echo "⚠️  No changed files detected"
+          echo "should-release=false" >> $GITHUB_OUTPUT
+          echo "relevant-files=" >> $GITHUB_OUTPUT
+          echo "ignored-files=" >> $GITHUB_OUTPUT
+          echo "change-summary=No changes detected" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        echo "📋 Changed files:"
+        echo "$CHANGED_FILES"
+        echo ""
+        
+        RELEVANT_FILES=""
+        IGNORED_FILES=""
+        
+        # Check each changed file
+        while IFS= read -r file; do
+          if [ -z "$file" ]; then continue; fi
+          
+          IS_RELEVANT=false
+          IS_IGNORED=false
+          
+          # Check if file should be ignored
+          for pattern in "${IGNORE_PATTERNS[@]}"; do
+            case "$file" in
+              $pattern)
+                IS_IGNORED=true
+                break
+                ;;
+            esac
+          done
+          
+          # If not ignored, check if it's relevant
+          if [ "$IS_IGNORED" = "false" ]; then
+            for pattern in "${RELEVANT_PATTERNS[@]}"; do
+              case "$file" in
+                $pattern)
+                  IS_RELEVANT=true
+                  break
+                  ;;
+              esac
+            done
+          fi
+          
+          # Categorize file
+          if [ "$IS_IGNORED" = "true" ]; then
+            if [ -n "$IGNORED_FILES" ]; then
+              IGNORED_FILES="$IGNORED_FILES,$file"
+            else
+              IGNORED_FILES="$file"
+            fi
+            echo "  📄 $file (ignored)"
+          elif [ "$IS_RELEVANT" = "true" ]; then
+            if [ -n "$RELEVANT_FILES" ]; then
+              RELEVANT_FILES="$RELEVANT_FILES,$file"
+            else
+              RELEVANT_FILES="$file"
+            fi
+            echo "  ✅ $file (relevant)"
+          else
+            # Default to relevant if not explicitly ignored
+            if [ -n "$RELEVANT_FILES" ]; then
+              RELEVANT_FILES="$RELEVANT_FILES,$file"
+            else
+              RELEVANT_FILES="$file"
+            fi
+            echo "  ✅ $file (relevant - default)"
+          fi
+        done <<< "$CHANGED_FILES"
+        
+        # Determine if should release
+        if [ -n "$RELEVANT_FILES" ]; then
+          SHOULD_RELEASE="true"
+          echo "🚀 Release should be triggered - relevant changes detected"
+        else
+          SHOULD_RELEASE="false"
+          echo "⏭️  Release will be skipped - only documentation/config changes"
+        fi
+        
+        # Generate summary
+        RELEVANT_COUNT=$(echo "$RELEVANT_FILES" | tr ',' '\n' | grep -v '^$' | wc -l)
+        IGNORED_COUNT=$(echo "$IGNORED_FILES" | tr ',' '\n' | grep -v '^$' | wc -l)
+        
+        if [ "$SHOULD_RELEASE" = "true" ]; then
+          CHANGE_SUMMARY="✅ Will trigger release: $RELEVANT_COUNT relevant file(s) changed"
+        else
+          CHANGE_SUMMARY="⏭️  Will skip release: Only $IGNORED_COUNT non-relevant file(s) changed"
+        fi
+        
+        echo ""
+        echo "📊 Summary:"
+        echo "  - Relevant files: $RELEVANT_COUNT"
+        echo "  - Ignored files: $IGNORED_COUNT"
+        echo "  - Should release: $SHOULD_RELEASE"
+        echo "  - $CHANGE_SUMMARY"
+        
+        # Set outputs
+        echo "should-release=$SHOULD_RELEASE" >> $GITHUB_OUTPUT
+        echo "relevant-files=$RELEVANT_FILES" >> $GITHUB_OUTPUT
+        echo "ignored-files=$IGNORED_FILES" >> $GITHUB_OUTPUT
+        echo "change-summary=$CHANGE_SUMMARY" >> $GITHUB_OUTPUT

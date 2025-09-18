@@ -49,6 +49,14 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check release relevance (for manual dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        id: release_relevance
+        uses: ./.github/actions/check-release-relevance
+        with:
+          base-ref: 'origin/master'
+          head-ref: 'HEAD'
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:

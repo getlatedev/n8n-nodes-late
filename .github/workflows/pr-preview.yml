@@ -244,56 +244,69 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const buildSuccess = '${{ steps.build_test.outputs.BUILD_SUCCESS }}' === 'true';
-            const lintSuccess = '${{ steps.build_test.outputs.LINT_SUCCESS }}' === 'true';
-            const hasIssues = '${{ steps.issue_check.outputs.has_issues }}' === 'true';
-            const versionExists = '${{ steps.npm_check.outputs.version_exists }}' === 'true';
-            
-            const currentVersion = '${{ steps.release_analysis.outputs.current_version }}';
-            const newVersion = '${{ steps.release_analysis.outputs.new_version }}';
-            const versionType = '${{ steps.release_analysis.outputs.version_type }}';
-            const lastTag = '${{ steps.release_analysis.outputs.last_tag }}';
-            const latestNpm = '${{ steps.npm_check.outputs.latest_npm_version }}';
-            const changelogContent = `${{ steps.changelog_preview.outputs.changelog_content }}`;
-            const issues = `${{ steps.issue_check.outputs.issues }}`;
-            
             // Release relevance info
             const shouldRelease = '${{ steps.release_relevance.outputs.should-release }}' === 'true';
             const changeSummary = '${{ steps.release_relevance.outputs.change-summary }}';
             const relevantFiles = '${{ steps.release_relevance.outputs.relevant-files }}';
             const ignoredFiles = '${{ steps.release_relevance.outputs.ignored-files }}';
             
-            let status = '✅';
-            if (!buildSuccess || !lintSuccess || hasIssues || versionExists) {
-              status = '❌';
-            } else if (!shouldRelease) {
-              status = '⏭️';
+            let status = '⏭️';
+            let recommendation = '⏭️ **SAFE TO MERGE** - Only documentation/config changes, no release will be triggered.';
+            
+            if (shouldRelease) {
+              const buildSuccess = '${{ steps.build_test.outputs.BUILD_SUCCESS }}' === 'true';
+              const lintSuccess = '${{ steps.build_test.outputs.LINT_SUCCESS }}' === 'true';
+              const hasIssues = '${{ steps.issue_check.outputs.has_issues }}' === 'true';
+              const versionExists = '${{ steps.npm_check.outputs.version_exists }}' === 'true';
+              
+              const currentVersion = '${{ steps.release_analysis.outputs.current_version }}';
+              const newVersion = '${{ steps.release_analysis.outputs.new_version }}';
+              const versionType = '${{ steps.release_analysis.outputs.version_type }}';
+              const lastTag = '${{ steps.release_analysis.outputs.last_tag }}';
+              const latestNpm = '${{ steps.npm_check.outputs.latest_npm_version }}';
+              const changelogContent = `${{ steps.changelog_preview.outputs.changelog_content }}`;
+              const issues = `${{ steps.issue_check.outputs.issues }}`;
+              
+              status = '✅';
+              if (!buildSuccess || !lintSuccess || hasIssues || versionExists) {
+                status = '❌';
+              }
+              
+              if (!buildSuccess || !lintSuccess) {
+                recommendation = '❌ **DO NOT MERGE** - Build or linting failures need to be fixed first.';
+              } else if (versionExists) {
+                recommendation = '⚠️ **INVESTIGATE FIRST** - Version conflict needs to be resolved.';
+              } else if (hasIssues) {
+                recommendation = '⚠️ **REVIEW REQUIRED** - Please address the issues above.';
+              } else {
+                recommendation = '✅ **READY TO MERGE** - All checks passed, release will be created!';
+              }
             }
-            
-            let recommendation = '';
-            if (!buildSuccess || !lintSuccess) {
-              recommendation = '❌ **DO NOT MERGE** - Build or linting failures need to be fixed first.';
-            } else if (versionExists) {
-              recommendation = '⚠️ **INVESTIGATE FIRST** - Version conflict needs to be resolved.';
-            } else if (hasIssues) {
-              recommendation = '⚠️ **REVIEW REQUIRED** - Please address the issues above.';
-            } else if (!shouldRelease) {
-              recommendation = '⏭️ **SAFE TO MERGE** - Only documentation/config changes, no release will be triggered.';
-            } else {
-              recommendation = '✅ **READY TO MERGE** - All checks passed, release will be created!';
-            }
-            
-            const warningSection = versionExists ? `### ⚠️ **WARNING**
-            Version \`${newVersion}\` already exists on NPM! The release will fail.
-            You may need to manually increment the version or check why this version already exists.
-            ` : '';
-            
-            const issuesSection = hasIssues ? `### ⚠️ Potential Issues Detected
-            ${issues}` : '### ✅ No Issues Detected';
             
             let comment = '';
             
             if (shouldRelease) {
+              const buildSuccess = '${{ steps.build_test.outputs.BUILD_SUCCESS }}' === 'true';
+              const lintSuccess = '${{ steps.build_test.outputs.LINT_SUCCESS }}' === 'true';
+              const hasIssues = '${{ steps.issue_check.outputs.has_issues }}' === 'true';
+              const versionExists = '${{ steps.npm_check.outputs.version_exists }}' === 'true';
+              
+              const currentVersion = '${{ steps.release_analysis.outputs.current_version }}';
+              const newVersion = '${{ steps.release_analysis.outputs.new_version }}';
+              const versionType = '${{ steps.release_analysis.outputs.version_type }}';
+              const lastTag = '${{ steps.release_analysis.outputs.last_tag }}';
+              const latestNpm = '${{ steps.npm_check.outputs.latest_npm_version }}';
+              const changelogContent = `${{ steps.changelog_preview.outputs.changelog_content }}`;
+              const issues = `${{ steps.issue_check.outputs.issues }}`;
+              
+              const warningSection = versionExists ? `### ⚠️ **WARNING**
+              Version \`${newVersion}\` already exists on NPM! The release will fail.
+              You may need to manually increment the version or check why this version already exists.
+              ` : '';
+              
+              const issuesSection = hasIssues ? `### ⚠️ Potential Issues Detected
+              ${issues}` : '### ✅ No Issues Detected';
+              
               comment = `## ${status} Release Preview for PR #${context.issue.number}
             
               ### 📊 Build & Test Status
@@ -395,23 +408,29 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const buildSuccess = '${{ steps.build_test.outputs.BUILD_SUCCESS }}' === 'true';
-            const lintSuccess = '${{ steps.build_test.outputs.LINT_SUCCESS }}' === 'true';
-            const hasIssues = '${{ steps.issue_check.outputs.has_issues }}' === 'true';
-            const versionExists = '${{ steps.npm_check.outputs.version_exists }}' === 'true';
+            const shouldRelease = '${{ steps.release_relevance.outputs.should-release }}' === 'true';
             
             let state = 'success';
-            let description = 'Ready for release';
+            let description = 'No release - safe to merge';
             
-            if (!buildSuccess || !lintSuccess) {
-              state = 'failure';
-              description = 'Build or lint failures';
-            } else if (versionExists) {
-              state = 'failure';
-              description = 'Version already exists on NPM';
-            } else if (hasIssues) {
-              state = 'pending';
-              description = 'Issues detected - review required';
+            if (shouldRelease) {
+              const buildSuccess = '${{ steps.build_test.outputs.BUILD_SUCCESS }}' === 'true';
+              const lintSuccess = '${{ steps.build_test.outputs.LINT_SUCCESS }}' === 'true';
+              const hasIssues = '${{ steps.issue_check.outputs.has_issues }}' === 'true';
+              const versionExists = '${{ steps.npm_check.outputs.version_exists }}' === 'true';
+              
+              description = 'Ready for release';
+              
+              if (!buildSuccess || !lintSuccess) {
+                state = 'failure';
+                description = 'Build or lint failures';
+              } else if (versionExists) {
+                state = 'failure';
+                description = 'Version already exists on NPM';
+              } else if (hasIssues) {
+                state = 'pending';
+                description = 'Issues detected - review required';
+              }
             }
             
             await github.rest.repos.createCommitStatus({
@@ -428,14 +447,24 @@ jobs:
         run: |
           echo "## 🎯 Release Preview Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Current Version:** ${{ steps.release_analysis.outputs.current_version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Predicted Version:** ${{ steps.release_analysis.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version Type:** ${{ steps.release_analysis.outputs.version_type }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Build Status:** ${{ steps.build_test.outputs.BUILD_SUCCESS == 'true' && '✅ Success' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Lint Status:** ${{ steps.build_test.outputs.LINT_SUCCESS == 'true' && '✅ Success' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Issues Detected:** ${{ steps.issue_check.outputs.has_issues == 'true' && '⚠️ Yes' || '✅ None' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **NPM Version Conflict:** ${{ steps.npm_check.outputs.version_exists == 'true' && '❌ Yes' || '✅ None' }}" >> $GITHUB_STEP_SUMMARY
+          
+          # Show release relevance first
+          SHOULD_RELEASE="${{ steps.release_relevance.outputs.should-release }}"
+          echo "- **Release Relevant:** ${{ steps.release_relevance.outputs.should-release == 'true' && '✅ Yes' || '⏭️ No' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Change Summary:** ${{ steps.release_relevance.outputs.change-summary }}" >> $GITHUB_STEP_SUMMARY
           echo "- **PR Comment:** ${{ steps.create_comment.outputs.comment_created == 'true' && '✅ Created/Updated' || '❌ Failed to create' }}" >> $GITHUB_STEP_SUMMARY
+          
+          # Only show build/release details if relevant
+          if [ "$SHOULD_RELEASE" == "true" ]; then
+            echo "- **Current Version:** ${{ steps.release_analysis.outputs.current_version }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Predicted Version:** ${{ steps.release_analysis.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Version Type:** ${{ steps.release_analysis.outputs.version_type }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Build Status:** ${{ steps.build_test.outputs.BUILD_SUCCESS == 'true' && '✅ Success' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Lint Status:** ${{ steps.build_test.outputs.LINT_SUCCESS == 'true' && '✅ Success' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Issues Detected:** ${{ steps.issue_check.outputs.has_issues == 'true' && '⚠️ Yes' || '✅ None' }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **NPM Version Conflict:** ${{ steps.npm_check.outputs.version_exists == 'true' && '❌ Yes' || '✅ None' }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          
           echo "" >> $GITHUB_STEP_SUMMARY
           
           # If comment creation failed, show the content in summary
@@ -447,7 +476,10 @@ jobs:
           fi
           
           # Show recommendation
-          if [ "${{ steps.build_test.outputs.BUILD_SUCCESS }}" != "true" ] || [ "${{ steps.build_test.outputs.LINT_SUCCESS }}" != "true" ]; then
+          if [ "$SHOULD_RELEASE" != "true" ]; then
+            echo "### ⏭️ Recommendation: SAFE TO MERGE" >> $GITHUB_STEP_SUMMARY
+            echo "Only documentation/config changes, no release will be triggered." >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.build_test.outputs.BUILD_SUCCESS }}" != "true" ] || [ "${{ steps.build_test.outputs.LINT_SUCCESS }}" != "true" ]; then
             echo "### ❌ Recommendation: DO NOT MERGE" >> $GITHUB_STEP_SUMMARY
             echo "Build or linting failures need to be fixed first." >> $GITHUB_STEP_SUMMARY
           elif [ "${{ steps.npm_check.outputs.version_exists }}" == "true" ]; then

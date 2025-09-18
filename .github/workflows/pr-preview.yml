@@ -1,0 +1,358 @@
+name: PR Release Preview
+
+on:
+  pull_request:
+    branches: [master, main]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  preview-release:
+    runs-on: ubuntu-latest
+    if: github.head_ref == 'develop' || contains(github.head_ref, 'release/')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.N8N_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          echo "📦 Installing dependencies..."
+          npm ci
+
+      - name: Run build and tests
+        id: build_test
+        run: |
+          echo "BUILD_SUCCESS=false" >> $GITHUB_OUTPUT
+          echo "LINT_SUCCESS=false" >> $GITHUB_OUTPUT
+          
+          echo "🔍 Running linting..."
+          if npm run lint; then
+            echo "✅ Linting passed"
+            echo "LINT_SUCCESS=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Linting failed"
+            exit 1
+          fi
+          
+          echo "🏗️  Running build..."
+          if npm run build; then
+            echo "✅ Build successful"
+            echo "BUILD_SUCCESS=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Build failed"
+            exit 1
+          fi
+
+      - name: Analyze release impact
+        id: release_analysis
+        run: |
+          echo "🔍 Analyzing changes for release preview..."
+          
+          # Get current version
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Find last tag on master
+          git fetch origin master
+          LAST_TAG=$(git describe --tags --abbrev=0 origin/master 2>/dev/null || echo "")
+          echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
+          
+          if [ -z "$LAST_TAG" ]; then
+            echo "⚠️  No previous tags found on master"
+            echo "This will be the initial release"
+            VERSION_TYPE="patch"
+            NEW_VERSION="0.1.0"
+          else
+            echo "📍 Last tag on master: $LAST_TAG"
+          
+            # Get commits that would be included in the release
+            echo "📋 Getting commits since last tag..."
+            COMMITS=$(git log $LAST_TAG..HEAD --oneline --no-merges)
+            echo "Commits to be included:"
+            echo "$COMMITS"
+          
+            # Store commits for later use
+            echo "commits<<EOF" >> $GITHUB_OUTPUT
+            echo "$COMMITS" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          
+            # Determine version increment
+            if echo "$COMMITS" | grep -qE "^[a-f0-9]+ (feat|feature)(\(.+\))?!:"; then
+              VERSION_TYPE="major"
+              echo "🚨 Found breaking feature - will trigger MAJOR version"
+            elif echo "$COMMITS" | grep -qE "^[a-f0-9]+ .+!:"; then
+              VERSION_TYPE="major"
+              echo "🚨 Found breaking change - will trigger MAJOR version"
+            elif echo "$COMMITS" | grep -qE "^[a-f0-9]+ (feat|feature)(\(.+\))?:"; then
+              VERSION_TYPE="minor"
+              echo "🆕 Found feature - will trigger MINOR version"
+            else
+              VERSION_TYPE="patch"
+              echo "🔧 Only fixes/chores found - will trigger PATCH version"
+            fi
+          
+            # Calculate new version
+            IFS='.' read -ra VERSION_PARTS <<< "${CURRENT_VERSION}"
+            MAJOR=${VERSION_PARTS[0]}
+            MINOR=${VERSION_PARTS[1]}
+            PATCH=${VERSION_PARTS[2]}
+          
+            case $VERSION_TYPE in
+              major)
+                NEW_VERSION="$((MAJOR + 1)).0.0"
+                ;;
+              minor)
+                NEW_VERSION="${MAJOR}.$((MINOR + 1)).0"
+                ;;
+              patch)
+                NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+                ;;
+            esac
+          fi
+          
+          echo "version_type=$VERSION_TYPE" >> $GITHUB_OUTPUT
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "📈 Predicted new version: $NEW_VERSION ($VERSION_TYPE increment)"
+
+      - name: Check for potential issues
+        id: issue_check
+        run: |
+          echo "🔍 Checking for potential issues..."
+          
+          ISSUES=""
+          
+          # Check if package.json version differs from what would be generated
+          CURRENT_VERSION="${{ steps.release_analysis.outputs.current_version }}"
+          PREDICTED_VERSION="${{ steps.release_analysis.outputs.new_version }}"
+          
+          # Check build output
+          if [ ! -d "dist" ]; then
+            ISSUES="${ISSUES}- ❌ dist directory not found after build\n"
+          fi
+          
+          if [ ! -f "dist/late/Late.node.js" ]; then
+            ISSUES="${ISSUES}- ❌ Late.node.js not found in dist/late/\n"
+          fi
+          
+          # Check critical files
+          if [ ! -f "package.json" ]; then
+            ISSUES="${ISSUES}- ❌ package.json missing\n"
+          fi
+          
+          # Check for uncommitted changes that might affect release
+          if git diff --quiet; then
+            echo "✅ No uncommitted changes"
+          else
+            ISSUES="${ISSUES}- ⚠️  Uncommitted changes detected\n"
+          fi
+          
+          # Store issues
+          if [ -n "$ISSUES" ]; then
+            echo "issues<<EOF" >> $GITHUB_OUTPUT
+            echo -e "$ISSUES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "has_issues=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_issues=false" >> $GITHUB_OUTPUT
+            echo "✅ No issues detected"
+          fi
+
+      - name: Generate changelog preview
+        id: changelog_preview
+        run: |
+          echo "📝 Generating changelog preview..."
+          
+          COMMITS="${{ steps.release_analysis.outputs.commits }}"
+          NEW_VERSION="${{ steps.release_analysis.outputs.new_version }}"
+          TODAY=$(date +"%Y-%m-%d")
+          
+          # Generate changelog content
+          CHANGELOG_CONTENT="## [${NEW_VERSION}] - ${TODAY}
+
+          ### Changes"
+          
+          if [ -n "$COMMITS" ]; then
+            echo "$COMMITS" | while IFS= read -r commit; do
+              if [ -n "$commit" ]; then
+                CHANGELOG_CONTENT="${CHANGELOG_CONTENT}
+          - ${commit#* }" # Remove commit hash
+              fi
+            done
+          else
+            CHANGELOG_CONTENT="${CHANGELOG_CONTENT}
+          - Initial release"
+          fi
+          
+          # Store for use in comment
+          echo "changelog_content<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG_CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Check NPM package status
+        id: npm_check
+        run: |
+          echo "📦 Checking NPM package status..."
+          
+          PREDICTED_VERSION="${{ steps.release_analysis.outputs.new_version }}"
+          
+          # Check if version already exists on NPM
+          if npm view n8n-nodes-late@$PREDICTED_VERSION version >/dev/null 2>&1; then
+            echo "❌ Version $PREDICTED_VERSION already exists on NPM!"
+            echo "version_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Version $PREDICTED_VERSION is available on NPM"
+            echo "version_exists=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Get latest NPM version
+          LATEST_NPM=$(npm view n8n-nodes-late version 2>/dev/null || echo "not-published")
+          echo "latest_npm_version=$LATEST_NPM" >> $GITHUB_OUTPUT
+          echo "📍 Latest NPM version: $LATEST_NPM"
+
+      - name: Create PR comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.N8N_TOKEN }}
+          script: |
+            const buildSuccess = '${{ steps.build_test.outputs.BUILD_SUCCESS }}' === 'true';
+            const lintSuccess = '${{ steps.build_test.outputs.LINT_SUCCESS }}' === 'true';
+            const hasIssues = '${{ steps.issue_check.outputs.has_issues }}' === 'true';
+            const versionExists = '${{ steps.npm_check.outputs.version_exists }}' === 'true';
+            
+            const currentVersion = '${{ steps.release_analysis.outputs.current_version }}';
+            const newVersion = '${{ steps.release_analysis.outputs.new_version }}';
+            const versionType = '${{ steps.release_analysis.outputs.version_type }}';
+            const lastTag = '${{ steps.release_analysis.outputs.last_tag }}';
+            const latestNpm = '${{ steps.npm_check.outputs.latest_npm_version }}';
+            
+            let status = '✅';
+            if (!buildSuccess || !lintSuccess || hasIssues || versionExists) {
+              status = '❌';
+            }
+            
+            const comment = `## ${status} Release Preview for PR #${context.issue.number}
+            
+            ### 📊 Build & Test Status
+            - **Linting:** ${lintSuccess ? '✅ Passed' : '❌ Failed'}
+            - **Build:** ${buildSuccess ? '✅ Successful' : '❌ Failed'}
+            
+            ### 📈 Version Analysis
+            - **Current Version:** \`${currentVersion}\`
+            - **Predicted New Version:** \`${newVersion}\` (${versionType.toUpperCase()} increment)
+            - **Last Tag on Master:** ${lastTag || 'None (initial release)'}
+            - **Latest NPM Version:** \`${latestNpm}\`
+            
+            ### 🚀 What Will Happen When Merged
+            1. **Auto-release workflow** will trigger
+            2. Version will be bumped to \`${newVersion}\`
+            3. Git tag \`v${newVersion}\` will be created
+            4. GitHub release will be published
+            5. Package will be published to NPM
+            
+            ${versionExists ? `### ⚠️ **WARNING**
+            Version \`${newVersion}\` already exists on NPM! The release will fail.
+            You may need to manually increment the version or check why this version already exists.
+            ` : ''}
+            
+            ${hasIssues ? `### ⚠️ Potential Issues Detected
+            ${'${{ steps.issue_check.outputs.issues }}'}` : '### ✅ No Issues Detected'}
+            
+            ### 📝 Changelog Preview
+            \`\`\`markdown
+            ${'${{ steps.changelog_preview.outputs.changelog_content }}'}
+            \`\`\`
+            
+            ### 🎯 Recommendation
+            ${!buildSuccess || !lintSuccess ? '❌ **DO NOT MERGE** - Build or linting failures need to be fixed first.' : 
+              versionExists ? '⚠️ **INVESTIGATE FIRST** - Version conflict needs to be resolved.' :
+              hasIssues ? '⚠️ **REVIEW REQUIRED** - Please address the issues above.' :
+              '✅ **READY TO MERGE** - All checks passed successfully!'}
+            
+            ---
+            
+            🤖 *This preview is automatically generated. The actual release may vary based on additional commits.*
+            `;
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const existingComment = comments.find(comment => 
+              comment.body.includes('## 📊 Release Preview for PR')
+            );
+            
+            if (existingComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: comment
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+      - name: Set PR status
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.N8N_TOKEN }}
+          script: |
+            const buildSuccess = '${{ steps.build_test.outputs.BUILD_SUCCESS }}' === 'true';
+            const lintSuccess = '${{ steps.build_test.outputs.LINT_SUCCESS }}' === 'true';
+            const hasIssues = '${{ steps.issue_check.outputs.has_issues }}' === 'true';
+            const versionExists = '${{ steps.npm_check.outputs.version_exists }}' === 'true';
+            
+            let state = 'success';
+            let description = 'Ready for release';
+            
+            if (!buildSuccess || !lintSuccess) {
+              state = 'failure';
+              description = 'Build or lint failures';
+            } else if (versionExists) {
+              state = 'failure';
+              description = 'Version already exists on NPM';
+            } else if (hasIssues) {
+              state = 'pending';
+              description = 'Issues detected - review required';
+            }
+            
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state: state,
+              target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              description: description,
+              context: 'Release Preview'
+            });
+
+      - name: Summary
+        run: |
+          echo "## 🎯 Release Preview Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Current Version:** ${{ steps.release_analysis.outputs.current_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Predicted Version:** ${{ steps.release_analysis.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version Type:** ${{ steps.release_analysis.outputs.version_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Status:** ${{ steps.build_test.outputs.BUILD_SUCCESS == 'true' && '✅ Success' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Lint Status:** ${{ steps.build_test.outputs.LINT_SUCCESS == 'true' && '✅ Success' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Issues Detected:** ${{ steps.issue_check.outputs.has_issues == 'true' && '⚠️ Yes' || '✅ None' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **NPM Version Conflict:** ${{ steps.npm_check.outputs.version_exists == 'true' && '❌ Yes' || '✅ None' }}" >> $GITHUB_STEP_SUMMARY

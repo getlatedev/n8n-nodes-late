@@ -3,6 +3,20 @@ name: Auto Release
 on:
   push:
     branches: [master, main]
+    paths:
+      - 'late/**'
+      - 'credentials/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - '**.ts'
+      - '**.js'
+      - '**.json'
+      - '!.github/**'
+      - '!**.md'
+      - '!.gitignore'
+      - '!.eslintrc.js'
+      - '!.eslintignore'
   workflow_dispatch:
     inputs:
       version_type:

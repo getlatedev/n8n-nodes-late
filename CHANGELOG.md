@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.0.9] - 2025-09-18
+
+### Changes
+- Fix minor bugs (#9)
+
+
 ## [0.0.8] - 2025-09-18
 
 ### Changes

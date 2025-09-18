@@ -265,10 +265,55 @@ jobs:
               name: `Release ${newVersion}`,
               body: releaseNotes,
               draft: false,
-              prerelease: false
+              prerelease: false,
+              make_latest: true
             });
             
             console.log(`Created release: ${release.html_url}`);
+            console.log(`Release ID: ${release.id}`);
+            
+            // Wait a moment for GitHub to process the release
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Verify the release was created and is published
+            try {
+              const { data: verifyRelease } = await github.rest.repos.getRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: release.id
+              });
+              
+              console.log(`Release status: draft=${verifyRelease.draft}, prerelease=${verifyRelease.prerelease}`);
+              console.log(`✅ Release ${newVersion} created successfully and should trigger NPM publication`);
+            } catch (error) {
+              console.log(`⚠️  Could not verify release status: ${error.message}`);
+            }
+
+      - name: Trigger NPM Publication Workflow
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const newVersion = '${{ steps.new_version.outputs.new_version }}';
+            
+            console.log('🚀 Manually triggering NPM publication workflow as backup...');
+            
+            try {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'publish.yml',
+                ref: 'master',
+                inputs: {
+                  version: 'current'
+                }
+              });
+              
+              console.log('✅ NPM publication workflow triggered successfully');
+            } catch (error) {
+              console.log(`⚠️  Could not trigger NPM workflow manually: ${error.message}`);
+              console.log('The release event should still trigger it automatically');
+            }
 
       - name: Summary
         run: |
@@ -281,10 +326,12 @@ jobs:
           echo "- **Version Type:** ${VERSION_TYPE}" >> $GITHUB_STEP_SUMMARY
           echo "- **Tag Created:** v${NEW_VERSION}" >> $GITHUB_STEP_SUMMARY
           echo "- **Release:** [View Release](https://github.com/${{ github.repository }}/releases/tag/v${NEW_VERSION})" >> $GITHUB_STEP_SUMMARY
-          echo "- **NPM Publication:** Will be triggered automatically" >> $GITHUB_STEP_SUMMARY
+          echo "- **NPM Publication:** Triggered automatically + manual backup" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Version bumped and committed" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Tag created and pushed" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ GitHub release created" >> $GITHUB_STEP_SUMMARY
-          echo "- 🔄 NPM publication workflow will start automatically" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔄 NPM publication workflow triggered (release event + manual dispatch)" >> $GITHUB_STEP_SUMMARY
+          echo "- 📋 Monitor: [Actions](https://github.com/${{ github.repository }}/actions)" >> $GITHUB_STEP_SUMMARY
+          echo "- 📦 Verify: [NPM Package](https://www.npmjs.com/package/n8n-nodes-late)" >> $GITHUB_STEP_SUMMARY

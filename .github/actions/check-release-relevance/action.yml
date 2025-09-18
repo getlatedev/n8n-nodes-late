@@ -132,13 +132,13 @@ runs:
             fi
             echo "  ✅ $file (relevant)"
           else
-            # Default to relevant if not explicitly ignored
-            if [ -n "$RELEVANT_FILES" ]; then
-              RELEVANT_FILES="$RELEVANT_FILES,$file"
+            # File doesn't match any pattern - ignore by default for safety
+            if [ -n "$IGNORED_FILES" ]; then
+              IGNORED_FILES="$IGNORED_FILES,$file"
             else
-              RELEVANT_FILES="$file"
+              IGNORED_FILES="$file"
             fi
-            echo "  ✅ $file (relevant - default)"
+            echo "  📄 $file (no pattern match - ignored for safety)"
           fi
         done <<< "$CHANGED_FILES"
         

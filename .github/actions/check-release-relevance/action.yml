@@ -152,8 +152,17 @@ runs:
         fi
         
         # Generate summary
-        RELEVANT_COUNT=$(echo "$RELEVANT_FILES" | tr ',' '\n' | grep -v '^$' | wc -l)
-        IGNORED_COUNT=$(echo "$IGNORED_FILES" | tr ',' '\n' | grep -v '^$' | wc -l)
+        if [ -n "$RELEVANT_FILES" ]; then
+          RELEVANT_COUNT=$(echo "$RELEVANT_FILES" | tr ',' '\n' | grep -v '^$' | wc -l)
+        else
+          RELEVANT_COUNT=0
+        fi
+        
+        if [ -n "$IGNORED_FILES" ]; then
+          IGNORED_COUNT=$(echo "$IGNORED_FILES" | tr ',' '\n' | grep -v '^$' | wc -l)
+        else
+          IGNORED_COUNT=0
+        fi
         
         if [ "$SHOULD_RELEASE" = "true" ]; then
           CHANGE_SUMMARY="✅ Will trigger release: $RELEVANT_COUNT relevant file(s) changed"

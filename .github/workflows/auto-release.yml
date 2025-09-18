@@ -24,10 +24,10 @@ permissions:
 jobs:
   auto-release:
     runs-on: ubuntu-latest
-
+    
     # Solo ejecutar si hay commits que no sean merges automáticos
     if: "!contains(github.event.head_commit.message, 'chore: bump version')"
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -64,18 +64,18 @@ jobs:
           else
             # Analizar commits desde el último tag para determinar el tipo de versión
             LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
+            
             if [ -z "$LAST_TAG" ]; then
               echo "No previous tag found, using patch"
               VERSION_TYPE="patch"
             else
               echo "Last tag: $LAST_TAG"
-          
+              
               # Obtener commits desde el último tag
               COMMITS=$(git log $LAST_TAG..HEAD --oneline)
               echo "Commits since last tag:"
               echo "$COMMITS"
-          
+              
               # Determinar tipo de versión basado en conventional commits
               if echo "$COMMITS" | grep -qE "^[a-f0-9]+ (feat|feature)(\(.+\))?!:"; then
                 VERSION_TYPE="major"
@@ -199,7 +199,7 @@ jobs:
               const lines = changelog.split('\n');
               let capturing = false;
               let capturedLines = [];
-            
+              
               for (const line of lines) {
                 if (line.startsWith(`## [${newVersion}]`)) {
                   capturing = true;
@@ -212,7 +212,7 @@ jobs:
                   capturedLines.push(line);
                 }
               }
-            
+              
               changelogContent = capturedLines.join('\n').trim();
             } catch (error) {
               console.log('Could not read changelog:', error.message);
@@ -243,8 +243,7 @@ jobs:
               name: `Release ${newVersion}`,
               body: releaseNotes,
               draft: false,
-              prerelease: false,
-              make_latest: true
+              prerelease: false
             });
             
             console.log(`Created release: ${release.html_url}`);

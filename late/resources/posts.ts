@@ -41,7 +41,7 @@ export const postsResource: LateResourceModule = {
           body: {
             content: "={{ $parameter.content }}",
             platforms:
-              "={{ (() => {\n  const platforms = [];\n  const selectedPlatforms = $parameter.selectedPlatforms || [];\n  \n  if (selectedPlatforms.includes('twitter') && $parameter.twitterAccounts?.length) {\n    $parameter.twitterAccounts.forEach(accountId => {\n      platforms.push({ platform: 'twitter', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('instagram') && $parameter.instagramAccounts?.length) {\n    $parameter.instagramAccounts.forEach(accountId => {\n      platforms.push({ platform: 'instagram', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('facebook') && $parameter.facebookAccounts?.length) {\n    $parameter.facebookAccounts.forEach(accountId => {\n      platforms.push({ platform: 'facebook', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('linkedin') && $parameter.linkedinAccounts?.length) {\n    $parameter.linkedinAccounts.forEach(accountId => {\n      platforms.push({ platform: 'linkedin', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('tiktok') && $parameter.tiktokAccounts?.length) {\n    $parameter.tiktokAccounts.forEach(accountId => {\n      platforms.push({ platform: 'tiktok', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('youtube') && $parameter.youtubeAccounts?.length) {\n    $parameter.youtubeAccounts.forEach(accountId => {\n      platforms.push({ platform: 'youtube', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('threads') && $parameter.threadsAccounts?.length) {\n    $parameter.threadsAccounts.forEach(accountId => {\n      platforms.push({ platform: 'threads', accountId });\n    });\n  }\n  \n  return platforms;\n})() }}",
+                "={{ (() => {\n  const platforms = [];\n  const selectedPlatforms = $parameter.selectedPlatforms || [];\n  \n  if (selectedPlatforms.includes('twitter') && $parameter.twitterAccounts?.length) {\n    $parameter.twitterAccounts.forEach(accountId => {\n      platforms.push({ platform: 'twitter', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('instagram') && $parameter.instagramAccounts?.length) {\n    $parameter.instagramAccounts.forEach(accountId => {\n      platforms.push({ platform: 'instagram', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('facebook') && $parameter.facebookAccounts?.length) {\n    $parameter.facebookAccounts.forEach(accountId => {\n      platforms.push({ platform: 'facebook', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('linkedin') && $parameter.linkedinAccounts?.length) {\n    $parameter.linkedinAccounts.forEach(accountId => {\n      platforms.push({ platform: 'linkedin', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('tiktok') && $parameter.tiktokAccounts?.length) {\n    $parameter.tiktokAccounts.forEach(accountId => {\n      platforms.push({ platform: 'tiktok', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('youtube') && $parameter.youtubeAccounts?.length) {\n    $parameter.youtubeAccounts.forEach(accountId => {\n      platforms.push({ platform: 'youtube', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('threads') && $parameter.threadsAccounts?.length) {\n    $parameter.threadsAccounts.forEach(accountId => {\n      platforms.push({ platform: 'threads', accountId });\n    });\n  }\n  \n  return platforms;\n})() }}",
             scheduledFor: "={{ $parameter.scheduledFor || undefined }}",
             timezone: "={{ $parameter.timezone || 'UTC' }}",
             publishNow: "={{ $parameter.publishNow || false }}",
@@ -50,7 +50,7 @@ export const postsResource: LateResourceModule = {
             tags: "={{ $parameter.tags ? $parameter.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [] }}",
             mediaItems: "={{ $parameter.mediaItems?.items || [] }}",
             platformSpecificData:
-              "={{ (() => { const platformSpecific = {}; if ($parameter.twitterThreadItems?.items?.length > 0) { platformSpecific.threadItems = $parameter.twitterThreadItems.items.map(item => ({ content: item.content, mediaItems: item.mediaItems?.items || [] })); } if ($parameter.threadsThreadItems?.items?.length > 0) { platformSpecific.threadItems = $parameter.threadsThreadItems.items.map(item => ({ content: item.content, mediaItems: item.mediaItems?.items || [] })); } if ($parameter.tiktokPrivacyLevel || $parameter.tiktokAllowComments !== undefined || $parameter.tiktokAllowDuet !== undefined || $parameter.tiktokAllowStitch !== undefined) { platformSpecific.tiktokSettings = { privacy_level: $parameter.tiktokPrivacyLevel || 'PUBLIC_TO_EVERYONE', allow_comment: $parameter.tiktokAllowComments !== false, allow_duet: $parameter.tiktokAllowDuet !== false, allow_stitch: $parameter.tiktokAllowStitch !== false }; } return Object.keys(platformSpecific).length > 0 ? platformSpecific : {}; })() }}",
+                "={{ (() => { const platformSpecific = {}; if ($parameter.twitterThreadItems?.items?.length > 0) { platformSpecific.threadItems = $parameter.twitterThreadItems.items.map(item => ({ content: item.content, mediaItems: item.mediaItems?.items || [] })); } if ($parameter.threadsThreadItems?.items?.length > 0) { platformSpecific.threadItems = $parameter.threadsThreadItems.items.map(item => ({ content: item.content, mediaItems: item.mediaItems?.items || [] })); } if ($parameter.tiktokPrivacyLevel || $parameter.tiktokAllowComments !== undefined || $parameter.tiktokAllowDuet !== undefined || $parameter.tiktokAllowStitch !== undefined) { platformSpecific.tiktokSettings = { privacy_level: $parameter.tiktokPrivacyLevel || 'PUBLIC_TO_EVERYONE', allow_comment: $parameter.tiktokAllowComments !== false, allow_duet: $parameter.tiktokAllowDuet !== false, allow_stitch: $parameter.tiktokAllowStitch !== false }; } return Object.keys(platformSpecific).length > 0 ? platformSpecific : {}; })() }}",
           },
         },
       },
@@ -66,7 +66,7 @@ export const postsResource: LateResourceModule = {
           body: {
             content: "={{ $parameter.content || undefined }}",
             platforms:
-              "={{ (() => {\n  const platforms = [];\n  const selectedPlatforms = $parameter.selectedPlatforms || [];\n  \n  if (selectedPlatforms.includes('twitter') && $parameter.twitterAccounts?.length) {\n    $parameter.twitterAccounts.forEach(accountId => {\n      platforms.push({ platform: 'twitter', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('instagram') && $parameter.instagramAccounts?.length) {\n    $parameter.instagramAccounts.forEach(accountId => {\n      platforms.push({ platform: 'instagram', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('facebook') && $parameter.facebookAccounts?.length) {\n    $parameter.facebookAccounts.forEach(accountId => {\n      platforms.push({ platform: 'facebook', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('linkedin') && $parameter.linkedinAccounts?.length) {\n    $parameter.linkedinAccounts.forEach(accountId => {\n      platforms.push({ platform: 'linkedin', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('tiktok') && $parameter.tiktokAccounts?.length) {\n    $parameter.tiktokAccounts.forEach(accountId => {\n      platforms.push({ platform: 'tiktok', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('youtube') && $parameter.youtubeAccounts?.length) {\n    $parameter.youtubeAccounts.forEach(accountId => {\n      platforms.push({ platform: 'youtube', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('threads') && $parameter.threadsAccounts?.length) {\n    $parameter.threadsAccounts.forEach(accountId => {\n      platforms.push({ platform: 'threads', accountId });\n    });\n  }\n  \n  return platforms.length > 0 ? platforms : undefined;\n})() }}",
+                "={{ (() => {\n  const platforms = [];\n  const selectedPlatforms = $parameter.selectedPlatforms || [];\n  \n  if (selectedPlatforms.includes('twitter') && $parameter.twitterAccounts?.length) {\n    $parameter.twitterAccounts.forEach(accountId => {\n      platforms.push({ platform: 'twitter', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('instagram') && $parameter.instagramAccounts?.length) {\n    $parameter.instagramAccounts.forEach(accountId => {\n      platforms.push({ platform: 'instagram', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('facebook') && $parameter.facebookAccounts?.length) {\n    $parameter.facebookAccounts.forEach(accountId => {\n      platforms.push({ platform: 'facebook', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('linkedin') && $parameter.linkedinAccounts?.length) {\n    $parameter.linkedinAccounts.forEach(accountId => {\n      platforms.push({ platform: 'linkedin', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('tiktok') && $parameter.tiktokAccounts?.length) {\n    $parameter.tiktokAccounts.forEach(accountId => {\n      platforms.push({ platform: 'tiktok', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('youtube') && $parameter.youtubeAccounts?.length) {\n    $parameter.youtubeAccounts.forEach(accountId => {\n      platforms.push({ platform: 'youtube', accountId });\n    });\n  }\n  \n  if (selectedPlatforms.includes('threads') && $parameter.threadsAccounts?.length) {\n    $parameter.threadsAccounts.forEach(accountId => {\n      platforms.push({ platform: 'threads', accountId });\n    });\n  }\n  \n  return platforms.length > 0 ? platforms : undefined;\n})() }}",
             scheduledFor: "={{ $parameter.scheduledFor || undefined }}",
             timezone: "={{ $parameter.timezone || undefined }}",
             publishNow: "={{ $parameter.publishNow || undefined }}",
@@ -75,7 +75,7 @@ export const postsResource: LateResourceModule = {
             tags: "={{ $parameter.tags ? $parameter.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : undefined }}",
             mediaItems: "={{ $parameter.mediaItems?.items || undefined }}",
             platformSpecificData:
-              "={{ (() => { const platformSpecific = {}; if ($parameter.twitterThreadItems?.items?.length > 0) { platformSpecific.threadItems = $parameter.twitterThreadItems.items.map(item => ({ content: item.content, mediaItems: item.mediaItems?.items || [] })); } if ($parameter.threadsThreadItems?.items?.length > 0) { platformSpecific.threadItems = $parameter.threadsThreadItems.items.map(item => ({ content: item.content, mediaItems: item.mediaItems?.items || [] })); } if ($parameter.tiktokPrivacyLevel || $parameter.tiktokAllowComments !== undefined || $parameter.tiktokAllowDuet !== undefined || $parameter.tiktokAllowStitch !== undefined) { platformSpecific.tiktokSettings = { privacy_level: $parameter.tiktokPrivacyLevel || 'PUBLIC_TO_EVERYONE', allow_comment: $parameter.tiktokAllowComments !== false, allow_duet: $parameter.tiktokAllowDuet !== false, allow_stitch: $parameter.tiktokAllowStitch !== false }; } return Object.keys(platformSpecific).length > 0 ? platformSpecific : undefined; })() }}",
+                "={{ (() => { const platformSpecific = {}; if ($parameter.twitterThreadItems?.items?.length > 0) { platformSpecific.threadItems = $parameter.twitterThreadItems.items.map(item => ({ content: item.content, mediaItems: item.mediaItems?.items || [] })); } if ($parameter.threadsThreadItems?.items?.length > 0) { platformSpecific.threadItems = $parameter.threadsThreadItems.items.map(item => ({ content: item.content, mediaItems: item.mediaItems?.items || [] })); } if ($parameter.tiktokPrivacyLevel || $parameter.tiktokAllowComments !== undefined || $parameter.tiktokAllowDuet !== undefined || $parameter.tiktokAllowStitch !== undefined) { platformSpecific.tiktokSettings = { privacy_level: $parameter.tiktokPrivacyLevel || 'PUBLIC_TO_EVERYONE', allow_comment: $parameter.tiktokAllowComments !== false, allow_duet: $parameter.tiktokAllowDuet !== false, allow_stitch: $parameter.tiktokAllowStitch !== false }; } return Object.keys(platformSpecific).length > 0 ? platformSpecific : undefined; })() }}",
           },
         },
       },
@@ -117,7 +117,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "The unique identifier of the post. You can get this from the 'List Posts' operation or from the response when creating a post.",
+          "The unique identifier of the post. You can get this from the 'List Posts' operation or from the response when creating a post.",
       required: true,
     },
     {
@@ -135,7 +135,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "The main text content of your post. Will be used across all selected platforms. Note: Different platforms have different character limits (Twitter: 280, LinkedIn: 3000, Instagram: 2200). Emojis and hashtags are supported.",
+          "The main text content of your post. Will be used across all selected platforms. Note: Different platforms have different character limits (Twitter: 280, LinkedIn: 3000, Instagram: 2200). Emojis and hashtags are supported.",
       placeholder: "Hello, world! 🌍 #socialmedia #automation",
       required: true,
     },
@@ -160,7 +160,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "Select the platforms where you want to post your content. After selecting platforms, you'll be able to choose specific accounts for each platform.",
+          "Select the platforms where you want to post your content. After selecting platforms, you'll be able to choose specific accounts for each platform.",
       required: true,
     },
     {
@@ -179,7 +179,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "Select the Twitter/X accounts to post to. Make sure you have connected Twitter accounts in your LATE profile.",
+          "Select the Twitter/X accounts to post to. Make sure you have connected Twitter accounts in your LATE profile.",
       required: false,
     },
     {
@@ -198,7 +198,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "Select the Instagram accounts to post to. Make sure you have connected Instagram Business accounts in your LATE profile.",
+          "Select the Instagram accounts to post to. Make sure you have connected Instagram Business accounts in your LATE profile.",
     },
     {
       displayName: "Facebook Accounts",
@@ -216,7 +216,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "Select the Facebook pages to post to. Make sure you have connected Facebook pages in your LATE profile.",
+          "Select the Facebook pages to post to. Make sure you have connected Facebook pages in your LATE profile.",
     },
     {
       displayName: "LinkedIn Accounts",
@@ -234,7 +234,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "Select the LinkedIn accounts/companies to post to. Make sure you have connected LinkedIn accounts in your LATE profile.",
+          "Select the LinkedIn accounts/companies to post to. Make sure you have connected LinkedIn accounts in your LATE profile.",
     },
     {
       displayName: "TikTok Accounts",
@@ -252,7 +252,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "Select the TikTok accounts to post to. Make sure you have connected TikTok accounts in your LATE profile.",
+          "Select the TikTok accounts to post to. Make sure you have connected TikTok accounts in your LATE profile.",
     },
     {
       displayName: "YouTube Accounts",
@@ -270,7 +270,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "Select the YouTube channels to post to. Make sure you have connected YouTube channels in your LATE profile.",
+          "Select the YouTube channels to post to. Make sure you have connected YouTube channels in your LATE profile.",
     },
     {
       displayName: "Threads Accounts",
@@ -288,7 +288,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "Select the Threads accounts to post to. Make sure you have connected Threads accounts in your LATE profile.",
+          "Select the Threads accounts to post to. Make sure you have connected Threads accounts in your LATE profile.",
     },
     {
       displayName: "Scheduled For",
@@ -302,7 +302,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "When to publish the post. Leave empty to publish immediately. Date/time should be in the future. Use together with timezone for accurate scheduling across different time zones.",
+          "When to publish the post. Leave empty to publish immediately. Date/time should be in the future. Use together with timezone for accurate scheduling across different time zones.",
     },
     {
       displayName: "Timezone",
@@ -316,7 +316,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "Timezone for the scheduled post. Use standard timezone names like 'America/New_York', 'Europe/London', 'Asia/Tokyo', etc. Defaults to UTC if not specified.",
+          "Timezone for the scheduled post. Use standard timezone names like 'America/New_York', 'Europe/London', 'Asia/Tokyo', etc. Defaults to UTC if not specified.",
       placeholder: "America/New_York",
     },
     {
@@ -331,7 +331,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "Publish the post immediately instead of scheduling it. When enabled, 'Scheduled For' will be ignored and the post will be published right away.",
+          "Publish the post immediately instead of scheduling it. When enabled, 'Scheduled For' will be ignored and the post will be published right away.",
     },
     {
       displayName: "Is Draft",
@@ -345,7 +345,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "Save as draft instead of scheduling or publishing. Drafts don't count toward your upload limits and can be edited later before publishing.",
+          "Save as draft instead of scheduling or publishing. Drafts don't count toward your upload limits and can be edited later before publishing.",
     },
     {
       displayName: "Visibility",
@@ -366,7 +366,7 @@ export const postsResource: LateResourceModule = {
           name: "Unlisted",
           value: "unlisted",
           description:
-            "Not shown in public feeds but accessible via direct link",
+              "Not shown in public feeds but accessible via direct link",
         },
       ],
       default: "public",
@@ -377,7 +377,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "Who can see this post. Note: Not all platforms support all visibility options. Platform-specific defaults will be used when not supported.",
+          "Who can see this post. Note: Not all platforms support all visibility options. Platform-specific defaults will be used when not supported.",
     },
     {
       displayName: "Tags",
@@ -391,7 +391,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "Comma-separated tags/keywords for the post. Primarily used by YouTube for search optimization (500 char limit, ~15 tags max). Keep tags relevant and descriptive.",
+          "Comma-separated tags/keywords for the post. Primarily used by YouTube for search optimization (500 char limit, ~15 tags max). Keep tags relevant and descriptive.",
       placeholder: "programming, tutorial, automation, n8n",
     },
     {
@@ -410,7 +410,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "Media files to attach to your post. Upload files first using 'Media > Upload', then use the returned URLs here. Supports up to 5GB per file.",
+          "Media files to attach to your post. Upload files first using 'Media > Upload', then use the returned URLs here. Supports up to 5GB per file.",
       options: [
         {
           name: "items",
@@ -452,9 +452,9 @@ export const postsResource: LateResourceModule = {
               type: "string",
               default: "",
               description:
-                "URL of the uploaded media file from the /v1/media endpoint",
+                  "URL of the uploaded media file from the /v1/media endpoint",
               placeholder:
-                "https://getlate.dev/api/v1/media/uploaded-file-url.jpg",
+                  "https://getlate.dev/api/v1/media/uploaded-file-url.jpg",
               required: true,
             },
             {
@@ -471,7 +471,7 @@ export const postsResource: LateResourceModule = {
               type: "string",
               default: "",
               description:
-                "MIME type of the file. Required for documents (e.g., application/pdf)",
+                  "MIME type of the file. Required for documents (e.g., application/pdf)",
               placeholder: "image/jpeg",
               displayOptions: {
                 show: {
@@ -501,7 +501,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "Create Twitter/X threads with multiple tweets. Each tweet supports up to 280 characters. Only the first tweet can include media.",
+          "Create Twitter/X threads with multiple tweets. Each tweet supports up to 280 characters. Only the first tweet can include media.",
       options: [
         {
           name: "items",
@@ -528,7 +528,7 @@ export const postsResource: LateResourceModule = {
                 multipleValues: true,
               },
               description:
-                "Media files for this tweet. Note: Only the first tweet in a thread can have media.",
+                  "Media files for this tweet. Note: Only the first tweet in a thread can have media.",
               options: [
                 {
                   name: "items",
@@ -587,7 +587,7 @@ export const postsResource: LateResourceModule = {
         },
       },
       description:
-        "Create Threads conversations with multiple posts. Each post supports up to 500 characters. Only the first post can include media.",
+          "Create Threads conversations with multiple posts. Each post supports up to 500 characters. Only the first post can include media.",
       options: [
         {
           name: "items",
@@ -614,7 +614,7 @@ export const postsResource: LateResourceModule = {
                 multipleValues: true,
               },
               description:
-                "Media files for this post. Note: Only the first post in a conversation can have media.",
+                  "Media files for this post. Note: Only the first post in a conversation can have media.",
               options: [
                 {
                   name: "items",

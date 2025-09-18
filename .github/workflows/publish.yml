@@ -10,16 +10,22 @@ on:
         required: false
         default: 'current'
 
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+  issues: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.NPM_TOKEN }}  # ← Added explicit token
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -140,7 +146,7 @@ jobs:
         if: github.event_name == 'release'
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.NPM_TOKEN }}  # ← Added explicit token
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const packageVersion = '${{ steps.version_info.outputs.package_version }}';
             const releaseId = context.payload.release.id;

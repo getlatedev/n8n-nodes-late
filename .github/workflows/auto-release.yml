@@ -15,19 +15,25 @@ on:
           - minor
           - major
 
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+  issues: write
+
 jobs:
   auto-release:
     runs-on: ubuntu-latest
-    
+
     # Solo ejecutar si hay commits que no sean merges automáticos
     if: "!contains(github.event.head_commit.message, 'chore: bump version')"
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.NPM_TOKEN }}  # ← Changed from GITHUB_TOKEN
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -179,7 +185,7 @@ jobs:
       - name: Create GitHub Release
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.NPM_TOKEN }}  # ← Added explicit token
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
             const newVersion = '${{ steps.new_version.outputs.new_version }}';

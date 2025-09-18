@@ -20,7 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'  # ← Cambiado de 18 a 20
 
       - name: Install dependencies
         run: |
@@ -233,11 +233,32 @@ jobs:
             const versionType = '${{ steps.release_analysis.outputs.version_type }}';
             const lastTag = '${{ steps.release_analysis.outputs.last_tag }}';
             const latestNpm = '${{ steps.npm_check.outputs.latest_npm_version }}';
+            const changelogContent = `${{ steps.changelog_preview.outputs.changelog_content }}`;
+            const issues = `${{ steps.issue_check.outputs.issues }}`;
             
             let status = '✅';
             if (!buildSuccess || !lintSuccess || hasIssues || versionExists) {
               status = '❌';
             }
+            
+            let recommendation = '';
+            if (!buildSuccess || !lintSuccess) {
+              recommendation = '❌ **DO NOT MERGE** - Build or linting failures need to be fixed first.';
+            } else if (versionExists) {
+              recommendation = '⚠️ **INVESTIGATE FIRST** - Version conflict needs to be resolved.';
+            } else if (hasIssues) {
+              recommendation = '⚠️ **REVIEW REQUIRED** - Please address the issues above.';
+            } else {
+              recommendation = '✅ **READY TO MERGE** - All checks passed successfully!';
+            }
+            
+            const warningSection = versionExists ? `### ⚠️ **WARNING**
+            Version \`${newVersion}\` already exists on NPM! The release will fail.
+            You may need to manually increment the version or check why this version already exists.
+            ` : '';
+            
+            const issuesSection = hasIssues ? `### ⚠️ Potential Issues Detected
+            ${issues}` : '### ✅ No Issues Detected';
             
             const comment = `## ${status} Release Preview for PR #${context.issue.number}
             
@@ -258,24 +279,17 @@ jobs:
             4. GitHub release will be published
             5. Package will be published to NPM
             
-            ${versionExists ? `### ⚠️ **WARNING**
-            Version \`${newVersion}\` already exists on NPM! The release will fail.
-            You may need to manually increment the version or check why this version already exists.
-            ` : ''}
+            ${warningSection}
             
-            ${hasIssues ? `### ⚠️ Potential Issues Detected
-            ${'${{ steps.issue_check.outputs.issues }}'}` : '### ✅ No Issues Detected'}
+            ${issuesSection}
             
             ### 📝 Changelog Preview
             \`\`\`markdown
-            ${'${{ steps.changelog_preview.outputs.changelog_content }}'}
+            ${changelogContent}
             \`\`\`
             
             ### 🎯 Recommendation
-            ${!buildSuccess || !lintSuccess ? '❌ **DO NOT MERGE** - Build or linting failures need to be fixed first.' : 
-              versionExists ? '⚠️ **INVESTIGATE FIRST** - Version conflict needs to be resolved.' :
-              hasIssues ? '⚠️ **REVIEW REQUIRED** - Please address the issues above.' :
-              '✅ **READY TO MERGE** - All checks passed successfully!'}
+            ${recommendation}
             
             ---
             
@@ -290,7 +304,7 @@ jobs:
             });
             
             const existingComment = comments.find(comment => 
-              comment.body.includes('## 📊 Release Preview for PR')
+              comment.body.includes('Release Preview for PR')
             );
             
             if (existingComment) {
@@ -301,6 +315,7 @@ jobs:
                 comment_id: existingComment.id,
                 body: comment
               });
+              console.log('Updated existing PR comment');
             } else {
               // Create new comment
               await github.rest.issues.createComment({
@@ -309,6 +324,7 @@ jobs:
                 issue_number: context.issue.number,
                 body: comment
               });
+              console.log('Created new PR comment');
             }
 
       - name: Set PR status

@@ -265,8 +265,7 @@ jobs:
               name: `Release ${newVersion}`,
               body: releaseNotes,
               draft: false,
-              prerelease: false,
-              make_latest: true
+              prerelease: false
             });
             
             console.log(`Created release: ${release.html_url}`);

@@ -1,4 +1,8 @@
 import type { LateResourceModule } from "../types";
+import {
+  buildProfileIdField,
+  buildAccountIdField,
+} from "../utils/commonFields";
 
 export const accountsResource: LateResourceModule = {
   operations: [
@@ -30,33 +34,19 @@ export const accountsResource: LateResourceModule = {
   ],
 
   fields: [
+    // Profile ID for filtering (optional)
     {
-      displayName: "Profile ID",
-      name: "profileId",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["accounts"],
-          operation: ["list"],
-        },
-      },
-      description: "Optional: Filter accounts by a specific profile ID. Leave empty to see all connected accounts across all profiles.",
+      ...buildProfileIdField("accounts", ["list"], false),
+      description:
+        "Optional: Filter accounts by a specific profile ID. Leave empty to see all connected accounts across all profiles.",
       placeholder: "profile_123_abc",
     },
+
+    // Account ID for deletion
     {
-      displayName: "Account ID",
-      name: "accountId",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["accounts"],
-          operation: ["delete"],
-        },
-      },
-      description: "The unique ID of the social media account to disconnect. You can get this from the 'List' operation. Disconnecting removes the account from your profile but doesn't delete the actual social media account.",
-      required: true,
+      ...buildAccountIdField("accounts", ["delete"]),
+      description:
+        "The unique ID of the social media account to disconnect. You can get this from the 'List' operation. Disconnecting removes the account from your profile but doesn't delete the actual social media account.",
     },
   ],
 };

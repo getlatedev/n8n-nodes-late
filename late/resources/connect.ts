@@ -1,4 +1,6 @@
 import type { LateResourceModule } from "../types";
+import { buildProfileIdField } from "../utils/commonFields";
+import { SUPPORTED_PLATFORMS } from "../utils/platformHelpers";
 
 export const connectResource: LateResourceModule = {
   operations: [
@@ -20,47 +22,16 @@ export const connectResource: LateResourceModule = {
   ],
 
   fields: [
+    // Platform selector using centralized platforms
     {
       displayName: "Platform",
       name: "platform",
       type: "options",
-      options: [
-        {
-          name: "Twitter/X",
-          value: "twitter",
-          description: "Connect Twitter (X) account",
-        },
-        {
-          name: "Instagram",
-          value: "instagram",
-          description: "Connect Instagram Business account (required)",
-        },
-        {
-          name: "Facebook",
-          value: "facebook",
-          description: "Connect Facebook page",
-        },
-        {
-          name: "LinkedIn",
-          value: "linkedin",
-          description: "Connect LinkedIn personal or company page",
-        },
-        {
-          name: "TikTok",
-          value: "tiktok",
-          description: "Connect TikTok creator account",
-        },
-        {
-          name: "YouTube",
-          value: "youtube",
-          description: "Connect YouTube channel",
-        },
-        {
-          name: "Threads",
-          value: "threads",
-          description: "Connect Threads account",
-        },
-      ],
+      options: SUPPORTED_PLATFORMS.map((platform) => ({
+        name: platform.name,
+        value: platform.value,
+        description: `Connect ${platform.name} account`,
+      })),
       default: "twitter",
       displayOptions: {
         show: {
@@ -68,21 +39,15 @@ export const connectResource: LateResourceModule = {
           operation: ["connect"],
         },
       },
-      description: "Social media platform to connect to your profile. Each platform has specific requirements and OAuth flows.",
+      description:
+        "Social media platform to connect to your profile. Each platform has specific requirements and OAuth flows.",
     },
+
+    // Profile ID field using common builder
     {
-      displayName: "Profile ID",
-      name: "profileId",
-      type: "string",
-      default: "",
-      required: true,
-      displayOptions: {
-        show: {
-          resource: ["connect"],
-          operation: ["connect"],
-        },
-      },
-      description: "The profile ID where this social media account will be connected. Each profile can have one account per platform. Get profile IDs from 'Profiles > List'.",
+      ...buildProfileIdField("connect", ["connect"]),
+      description:
+        "The profile ID where this social media account will be connected. Each profile can have one account per platform. Get profile IDs from 'Profiles > List'.",
       placeholder: "profile_123_abc",
     },
     {
@@ -96,7 +61,8 @@ export const connectResource: LateResourceModule = {
           operation: ["connect"],
         },
       },
-      description: "Optional: Custom URL to redirect to after OAuth completion. By default, users are redirected to the LATE dashboard. Use this to redirect to your own application with success/error parameters.",
+      description:
+        "Optional: Custom URL to redirect to after OAuth completion. By default, users are redirected to the LATE dashboard. Use this to redirect to your own application with success/error parameters.",
       placeholder: "https://your-app.com/oauth-callback",
     },
   ],

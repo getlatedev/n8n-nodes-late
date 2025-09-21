@@ -1,4 +1,10 @@
 import type { LateResourceModule } from "../types";
+import {
+  buildProfileIdField,
+  buildAccountIdField,
+  buildAccountTypeField,
+  buildSelectorField,
+} from "../utils/commonFields";
 
 export const cloneResource: LateResourceModule = {
   operations: [
@@ -14,11 +20,16 @@ export const cloneResource: LateResourceModule = {
             sourceAccountId: "={{ $parameter.sourceAccountId }}",
             targetPageId: "={{ $parameter.targetPageId || undefined }}",
             targetPageName: "={{ $parameter.targetPageName || undefined }}",
-            targetPageAccessToken: "={{ $parameter.targetPageAccessToken || undefined }}",
-            targetOrganizationId: "={{ $parameter.targetOrganizationId || undefined }}",
-            targetOrganizationUrn: "={{ $parameter.targetOrganizationUrn || undefined }}",
-            targetOrganizationName: "={{ $parameter.targetOrganizationName || undefined }}",
-            targetAccountType: "={{ $parameter.targetAccountType || undefined }}",
+            targetPageAccessToken:
+              "={{ $parameter.targetPageAccessToken || undefined }}",
+            targetOrganizationId:
+              "={{ $parameter.targetOrganizationId || undefined }}",
+            targetOrganizationUrn:
+              "={{ $parameter.targetOrganizationUrn || undefined }}",
+            targetOrganizationName:
+              "={{ $parameter.targetOrganizationName || undefined }}",
+            targetAccountType:
+              "={{ $parameter.targetAccountType || undefined }}",
           },
         },
       },
@@ -26,127 +37,79 @@ export const cloneResource: LateResourceModule = {
   ],
 
   fields: [
+    // Common fields using reusable builders
     {
-      displayName: "Profile ID",
-      name: "profileId",
-      type: "string",
-      default: "",
-      required: true,
-      displayOptions: {
-        show: {
-          resource: ["clone"],
-          operation: ["cloneConnection"],
-        },
-      },
+      ...buildProfileIdField("clone", ["cloneConnection"]),
       description: "Target profile ID",
     },
+
     {
-      displayName: "Source Account ID",
+      ...buildAccountIdField(
+        "clone",
+        ["cloneConnection"],
+        "Source Account ID",
+        "ID of existing connection to clone"
+      ),
       name: "sourceAccountId",
-      type: "string",
-      default: "",
-      required: true,
-      displayOptions: {
-        show: {
-          resource: ["clone"],
-          operation: ["cloneConnection"],
-        },
-      },
-      description: "ID of existing connection to clone",
     },
+
+    // Facebook-specific fields
+    buildSelectorField(
+      "clone",
+      ["cloneConnection"],
+      "targetPageId",
+      "Target Page ID",
+      "Facebook page ID to target (for Facebook)"
+    ),
+
+    buildSelectorField(
+      "clone",
+      ["cloneConnection"],
+      "targetPageName",
+      "Target Page Name",
+      "Facebook page name (for Facebook)"
+    ),
+
+    buildSelectorField(
+      "clone",
+      ["cloneConnection"],
+      "targetPageAccessToken",
+      "Target Page Access Token",
+      "Facebook page access token (for Facebook)"
+    ),
+
+    // LinkedIn-specific fields
+    buildSelectorField(
+      "clone",
+      ["cloneConnection"],
+      "targetOrganizationId",
+      "Target Organization ID",
+      "LinkedIn organization ID (for LinkedIn)",
+      "123456"
+    ),
+
+    buildSelectorField(
+      "clone",
+      ["cloneConnection"],
+      "targetOrganizationUrn",
+      "Target Organization URN",
+      "LinkedIn organization URN (for LinkedIn)",
+      "urn:li:organization:123456"
+    ),
+
+    buildSelectorField(
+      "clone",
+      ["cloneConnection"],
+      "targetOrganizationName",
+      "Target Organization Name",
+      "LinkedIn organization name (for LinkedIn)",
+      "Company Name"
+    ),
+
+    // Account type for LinkedIn
     {
-      displayName: "Target Page ID",
-      name: "targetPageId",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["clone"],
-          operation: ["cloneConnection"],
-        },
-      },
-      description: "Facebook page ID to target (for Facebook)",
-    },
-    {
-      displayName: "Target Page Name",
-      name: "targetPageName",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["clone"],
-          operation: ["cloneConnection"],
-        },
-      },
-      description: "Facebook page name (for Facebook)",
-    },
-    {
-      displayName: "Target Page Access Token",
-      name: "targetPageAccessToken",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["clone"],
-          operation: ["cloneConnection"],
-        },
-      },
-      description: "Facebook page access token (for Facebook)",
-    },
-    {
-      displayName: "Target Organization ID",
-      name: "targetOrganizationId",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["clone"],
-          operation: ["cloneConnection"],
-        },
-      },
-      description: "LinkedIn organization ID (for LinkedIn)",
-    },
-    {
-      displayName: "Target Organization URN",
-      name: "targetOrganizationUrn",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["clone"],
-          operation: ["cloneConnection"],
-        },
-      },
-      description: "LinkedIn organization URN (for LinkedIn)",
-    },
-    {
-      displayName: "Target Organization Name",
-      name: "targetOrganizationName",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["clone"],
-          operation: ["cloneConnection"],
-        },
-      },
-      description: "LinkedIn organization name (for LinkedIn)",
-    },
-    {
-      displayName: "Target Account Type",
+      ...buildAccountTypeField("clone", ["cloneConnection"]),
       name: "targetAccountType",
-      type: "options",
-      options: [
-        { name: "Personal", value: "personal" },
-        { name: "Organization", value: "organization" },
-      ],
-      default: "personal",
-      displayOptions: {
-        show: {
-          resource: ["clone"],
-          operation: ["cloneConnection"],
-        },
-      },
       description: "LinkedIn account type (for LinkedIn)",
     },
   ],

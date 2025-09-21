@@ -1,4 +1,11 @@
 import type { LateResourceModule } from "../types";
+import {
+  buildProfileIdField,
+  buildTempTokenField,
+  buildUserProfileFields,
+  buildAccountIdField,
+  buildSelectorField,
+} from "../utils/commonFields";
 
 export const facebookResource: LateResourceModule = {
   operations: [
@@ -52,140 +59,37 @@ export const facebookResource: LateResourceModule = {
   ],
 
   fields: [
-    {
-      displayName: "Profile ID",
-      name: "profileId",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["facebook"],
-          operation: ["listPages", "selectPage"],
-        },
-      },
-      description: "Profile ID",
-    },
-    {
-      displayName: "Temp Token",
-      name: "tempToken",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["facebook"],
-          operation: ["listPages", "selectPage"],
-        },
-      },
-      description: "Temporary OAuth token",
-    },
-    {
-      displayName: "Page ID",
-      name: "pageId",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["facebook"],
-          operation: ["selectPage"],
-        },
-      },
-      description: "Facebook page ID to select",
-    },
-    {
-      displayName: "User Profile ID",
-      name: "userProfileId",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["facebook"],
-          operation: ["selectPage"],
-        },
-      },
-      description: "Facebook user ID",
-      placeholder: "123456789",
-    },
-    {
-      displayName: "User Profile Name",
-      name: "userProfileName",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["facebook"],
-          operation: ["selectPage"],
-        },
-      },
-      description: "Facebook user display name",
-      placeholder: "John Doe",
-    },
-    {
-      displayName: "User Profile Email",
-      name: "userProfileEmail",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["facebook"],
-          operation: ["selectPage"],
-        },
-      },
-      description: "Facebook user email address",
-      placeholder: "john@example.com",
-    },
-    {
-      displayName: "User Profile Picture",
-      name: "userProfilePicture",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["facebook"],
-          operation: ["selectPage"],
-        },
-      },
-      description: "URL to the user's profile picture",
-      placeholder: "https://graph.facebook.com/123456789/picture",
-    },
-    {
-      displayName: "User Profile Access Token",
-      name: "userProfileAccessToken",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["facebook"],
-          operation: ["selectPage"],
-        },
-      },
-      description: "Facebook user access token",
-      placeholder: "EAABwzLix...",
-    },
-    {
-      displayName: "Account ID",
-      name: "accountId",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["facebook"],
-          operation: ["updatePage"],
-        },
-      },
-      description: "Account ID to update",
-    },
-    {
-      displayName: "Selected Page ID",
-      name: "selectedPageId",
-      type: "string",
-      default: "",
-      displayOptions: {
-        show: {
-          resource: ["facebook"],
-          operation: ["updatePage"],
-        },
-      },
-      description: "New page ID to select",
-    },
+    // Common fields using reusable builders
+    buildProfileIdField("facebook", ["listPages", "selectPage"]),
+    buildTempTokenField("facebook", ["listPages", "selectPage"]),
+    buildSelectorField(
+      "facebook",
+      ["selectPage"],
+      "pageId",
+      "Page ID",
+      "Facebook page ID to select",
+      undefined,
+      true
+    ),
+
+    // User profile fields for OAuth
+    ...buildUserProfileFields("facebook", ["selectPage"], "facebook"),
+
+    // Update page fields
+    buildAccountIdField(
+      "facebook",
+      ["updatePage"],
+      "Account ID",
+      "Account ID to update"
+    ),
+    buildSelectorField(
+      "facebook",
+      ["updatePage"],
+      "selectedPageId",
+      "Selected Page ID",
+      "New page ID to select",
+      undefined,
+      true
+    ),
   ],
 };

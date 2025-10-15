@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.10] - 2025-09-21
+
+### Changes
+- Fix variable interpretation bug & enhance project structure (#11)
+- Develop (#10)
+
+
 ## [0.0.9] - 2025-09-18
 
 ### Changes

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.0.11] - 2025-10-15
+
+### Changes
+- Fix official publication errors (#12)
+
+
 ## [0.0.10] - 2025-09-21
 
 ### Changes

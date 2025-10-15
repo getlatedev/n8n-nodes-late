@@ -10,8 +10,7 @@
     "lint": "eslint --ext .ts .",
     "lintfix": "eslint --ext .ts . --fix",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepack": "npm run build && npm run lint",
-    "prepublishOnly": "npm run build && npm run lint"
+    "prepack": "npm run build && npm run lint"
   },
   "keywords": [
     "n8n-community-node-package",

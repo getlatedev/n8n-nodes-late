@@ -74,7 +74,6 @@ function evaluateStringExpression(
         );
       }
     } catch (error) {
-      console.warn(`Failed to evaluate expression: ${str}`, error);
       // Return the original string if evaluation fails
       return str;
     }

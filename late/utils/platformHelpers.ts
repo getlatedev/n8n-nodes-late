@@ -63,7 +63,6 @@ export async function loadPlatformAccounts(
     );
 
     if (!response?.accounts) {
-      console.log(`No accounts found in response for ${platform}:`, response);
       return [{ name: `No ${platform} accounts found`, value: "none" }];
     }
 
@@ -85,7 +84,6 @@ export async function loadPlatformAccounts(
       value: account._id,
     }));
   } catch (error) {
-    console.error(`Error loading ${platform} accounts:`, error);
     const errorMsg =
       (error as any)?.cause?.code === "ECONNREFUSED"
         ? "Cannot connect to LATE API. Please check your internet connection."

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.0.12] - 2025-11-01
+
+### Changes
+- Fix errors given n8n feeback (#13)
+
+
 ## [0.0.11] - 2025-10-15
 
 ### Changes

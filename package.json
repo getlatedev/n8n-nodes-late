@@ -54,14 +54,15 @@
   "files": [
     "dist"
   ],
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  },
   "devDependencies": {
     "typescript": "^5.0.0",
     "@types/node": "^18.0.0",
     "eslint": "^8.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
-    "eslint-plugin-n8n-nodes-base": "^1.0.0",
-    "n8n-core": "^1.14.1",
-    "n8n-workflow": "^1.82.0"
+    "eslint-plugin-n8n-nodes-base": "^1.0.0"
   }
 }

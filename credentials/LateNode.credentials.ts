@@ -4,6 +4,7 @@ import {
   ICredentialTestRequest,
   ICredentialType,
   INodeCredentialTestResult,
+  INodeProperties,
 } from "n8n-workflow";
 
 export class LateNode implements ICredentialType {
@@ -11,11 +12,11 @@ export class LateNode implements ICredentialType {
   displayName = "LATE API";
   documentationUrl = "https://getlate.dev/docs#authentication";
 
-  properties = [
+  properties: INodeProperties[] = [
     {
       displayName: "API Key",
       name: "apiKey",
-      type: "string" as const,
+      type: "string",
       typeOptions: { password: true },
       default: "",
       description:
